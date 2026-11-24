@@ -9,6 +9,8 @@ import TutorNote from '../components/TutorNote.jsx'
 import { currentItem, currentStep, nextMove, optionOrder, section, turnRequest } from '../lesson.js'
 
 const WIDE_SCREEN = '(min-width: 64rem)' // where the sources sit in the margin instead of a bottom sheet
+// Lessons in these languages read from the right: tutor notes, answers and the answer sheet.
+const RIGHT_TO_LEFT = /hebrew|arabic|persian|farsi|urdu|yiddish|עברית|عربي/i
 
 export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const [live, setLive] = useState(null) // the tutor's reply while it streams in: { text }
@@ -77,6 +79,7 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const moreSteps = review ? review.index + 1 < review.stepIds.length : lesson.stepIndex + 1 < steps.length
   const nextLabel = !moreSteps ? 'Continue' : review ? 'Next question' : 'Next step'
   const canWrite = !busy && !['closing', 'finished'].includes(lesson.phase)
+  const direction = RIGHT_TO_LEFT.test(lesson.plan.language) ? 'rtl' : 'ltr'
 
   return (
     <main className="mx-auto max-w-sheet px-4 py-6 lg:py-10">
@@ -85,7 +88,7 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
       <div className="mt-6 lg:flex lg:items-start lg:gap-10">
         <section aria-label="Lesson" className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
           <h1 dir="auto" className="text-step font-bold">{heading}</h1>
-          <div className="mt-6 space-y-6">
+          <div dir={direction} className="mt-6 space-y-6">
             {shown.map((message, index) =>
               message.role === 'tutor' ? (
                 <TutorNote key={index} text={message.text} note={message.stopped ? 'Stopped' : ''} onShowSource={message.passageIds.length ? () => showSource(message.passageIds) : null} />

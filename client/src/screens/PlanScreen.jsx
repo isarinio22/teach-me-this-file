@@ -1,6 +1,7 @@
 import Alert from '../components/Alert.jsx'
 import Button from '../components/Button.jsx'
 import { TutorAvatar } from '../components/Drawings.jsx'
+import { LessonText } from '../components/TutorNote.jsx'
 
 // The plan as a teacher reads it: each step's goal and the question that checks it.
 export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStart, onBack }) {
@@ -36,9 +37,9 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
             {plan.steps.map((step, index) => (
               <li key={step.id} className="border-t border-grid py-6 first:border-t-0 first:pt-0">
                 <h2 dir="auto" className="text-step font-bold"><span className="text-blue">{index + 1}.</span> {step.title}</h2>
-                <p dir="auto" className="mt-2">{step.objective}</p>
+                <LessonText className="mt-2">{step.objective}</LessonText>
                 <p className="mt-4 text-small text-graphite">Check question</p>
-                <p dir="auto" className="mt-1 border-s-2 border-grid ps-3 text-graphite">{step.main.stem}</p>
+                <LessonText className="mt-1 border-s-2 border-grid ps-3 text-graphite">{step.main.stem}</LessonText>
                 {plan.steps.length > 1 && (
                   <Button variant="quiet" className="mt-2" aria-label={`Remove step ${index + 1}: ${step.title}`} onClick={() => onRemoveStep(step.id)}>
                     Remove step

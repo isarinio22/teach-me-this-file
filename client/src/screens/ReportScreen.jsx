@@ -1,6 +1,7 @@
 import Button from '../components/Button.jsx'
 import { TutorAvatar } from '../components/Drawings.jsx'
 import { OUTCOME_LABELS, OutcomeMark } from '../components/LessonPath.jsx'
+import { LessonText } from '../components/TutorNote.jsx'
 
 // What a teacher wants to know the next morning: how each step went and which wrong ideas showed up.
 export default function ReportScreen({ lesson, onRestart }) {
@@ -43,7 +44,7 @@ export default function ReportScreen({ lesson, onRestart }) {
             <ul className="mt-4 space-y-3">
               {caught.map(({ stepId, text }) => (
                 <li key={stepId + text} className="border-s-4 border-pen ps-3">
-                  <p dir="auto">{text}</p>
+                  <LessonText>{text}</LessonText>
                   <p dir="auto" className="text-small text-graphite">Step {plan.steps.findIndex((step) => step.id === stepId) + 1}: {plan.steps.find((step) => step.id === stepId).title}</p>
                 </li>
               ))}

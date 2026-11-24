@@ -5,14 +5,16 @@ import Button from './components/Button.jsx'
 import { DeskObjects } from './components/Drawings.jsx'
 import Settings from './components/Settings.jsx'
 import { lessonReducer, removeStep } from './lesson.js'
-import PlanScreen from './screens/PlanScreen.jsx'
-import ReportScreen from './screens/ReportScreen.jsx'
 import SetupScreen from './screens/SetupScreen.jsx'
 
-// The lesson screen carries the Markdown and math libraries, most of the app's size. It is loaded
-// separately, so the first page opens fast, and fetched early, as soon as a plan is ready.
+// The screens after Setup render Markdown and math, whose libraries are most of the app's size.
+// They are loaded separately, so the first page opens fast, and fetched as soon as a build starts.
+const loadPlanScreen = () => import('./screens/PlanScreen.jsx')
 const loadLessonScreen = () => import('./screens/LessonScreen.jsx')
+const loadReportScreen = () => import('./screens/ReportScreen.jsx')
+const PlanScreen = lazy(loadPlanScreen)
 const LessonScreen = lazy(loadLessonScreen)
+const ReportScreen = lazy(loadReportScreen)
 
 export default function App() {
   const [server, setServer] = useState('checking') // checking, slow, ready or down
@@ -41,7 +43,9 @@ export default function App() {
   }, [])
 
   // A new screen starts at the top, not where the last one was scrolled to.
-  useEffect(() => window.scrollTo(0, 0), [screen])
+  useEffect(() => {
+    window.scrollTo(0, 0) // braces matter: an effect may return only a cleanup function, and this returns nothing
+  }, [screen])
 
   function saveKey(key) {
     setApiKey(key)
@@ -56,6 +60,9 @@ export default function App() {
 
   async function build() {
     buildController.current = new AbortController()
+    loadPlanScreen()
+    loadLessonScreen()
+    loadReportScreen()
     setBuildError(null)
     setStage({ name: 'sending' })
     const result = await buildLesson({
@@ -70,7 +77,6 @@ export default function App() {
     if (result.error) return setBuildError(result.error)
     setBuilt(result)
     setScreen('plan')
-    loadLessonScreen()
   }
 
   function backToSetup() {
@@ -116,21 +122,19 @@ export default function App() {
           error={buildError}
         />
       )}
-      {screen === 'plan' && (
-        <PlanScreen
-          plan={built.plan}
-          usedBackupModel={built.usedBackupModel}
-          onRemoveStep={(stepId) => setBuilt({ ...built, plan: removeStep(built.plan, stepId) })}
-          onStart={startLesson}
-          onBack={backToSetup}
-        />
-      )}
-      {screen === 'lesson' && (
-        <Suspense fallback={<p role="status" className="mx-auto max-w-sheet px-4 py-10 text-graphite">Opening the lesson.</p>}>
-          <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />
-        </Suspense>
-      )}
-      {screen === 'report' && <ReportScreen lesson={lesson} onRestart={teachAnotherFile} />}
+      <Suspense fallback={<p role="status" className="mx-auto max-w-sheet px-4 py-10 text-graphite">Opening the page.</p>}>
+        {screen === 'plan' && (
+          <PlanScreen
+            plan={built.plan}
+            usedBackupModel={built.usedBackupModel}
+            onRemoveStep={(stepId) => setBuilt({ ...built, plan: removeStep(built.plan, stepId) })}
+            onStart={startLesson}
+            onBack={backToSetup}
+          />
+        )}
+        {screen === 'lesson' && <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />}
+        {screen === 'report' && <ReportScreen lesson={lesson} onRestart={teachAnotherFile} />}
+      </Suspense>
 
       {settingsOpen && <Settings apiKey={apiKey} onSave={saveKey} onClose={() => setSettingsOpen(false)} />}
     </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Button from './Button.jsx'
+import { LessonText } from './TutorNote.jsx'
 
 const MARK_LABELS = { right: 'your answer, right', wrong: 'your answer, wrong', answer: 'the right answer' }
 
@@ -27,7 +28,7 @@ export default function AnswerSheet({ item, order, marks, disabled, done, onChec
     <form onSubmit={check} className="rounded-field border-2 border-blue/30 bg-desk p-4 sm:p-5">
       <fieldset disabled={disabled}>
         <legend className="text-small text-graphite">Answer sheet</legend>
-        <p dir="auto" className="mt-1 text-lesson font-medium">{item.stem}</p>
+        <LessonText className="mt-1 text-lesson font-medium">{item.stem}</LessonText>
         <div className="mt-4 space-y-2">
           {order.map((index, position) => {
             const mark = marks[index]
@@ -41,7 +42,7 @@ export default function AnswerSheet({ item, order, marks, disabled, done, onChec
                 >
                   {position + 1}
                 </span>
-                <span dir="auto" className={`flex-1 ${mark === 'wrong' ? 'text-graphite line-through decoration-pen decoration-2' : ''}`}>{item.options[index].text}</span>
+                <LessonText className={`flex-1 ${mark === 'wrong' ? 'text-graphite line-through decoration-pen decoration-2' : ''}`}>{item.options[index].text}</LessonText>
                 {mark && <PenMark wrong={mark === 'wrong'} />}
                 {mark && <span className="sr-only">, {MARK_LABELS[mark]}</span>}
               </label>
