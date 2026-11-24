@@ -21,10 +21,10 @@ export default function App() {
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-rule">
-        <div className="mx-auto flex min-h-14 max-w-sheet items-center justify-between gap-4 px-4">
+      <header className="mx-auto max-w-sheet px-4 pt-4">
+        <div className="flex min-h-14 items-center justify-between gap-4 rounded-pill bg-sage py-1.5 ps-6 pe-1.5">
           <p className="font-bold">Teach me this file</p>
-          <Button variant="quiet" onClick={() => setSettingsOpen(true)}>
+          <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
             {apiKey ? 'Change API key' : 'Add API key'}
           </Button>
         </div>

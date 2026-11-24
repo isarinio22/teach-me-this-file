@@ -61,81 +61,83 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
   }
 
   return (
-    <main className="mx-auto max-w-sheet px-4 py-8 lg:flex lg:gap-12 lg:py-12">
-      <form onSubmit={submit} className="max-w-page lg:flex-1">
-        <h1 className="text-title font-bold md:text-display">Turn a file into a lesson</h1>
-        <p className="mt-3 text-lesson text-graphite">
-          Upload school material and say how it should be taught. The tutor teaches it one step at a time and checks every step with a question.
-        </p>
+    <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
+      <h1 className="text-title font-bold md:text-display">Turn a file into a lesson</h1>
+      <p className="mt-3 max-w-page text-lesson text-graphite">
+        Upload school material and say how it should be taught. The tutor teaches it one step at a time and checks every step with a question.
+      </p>
 
-        <section className="mt-8 border-t border-rule pt-8">
-          <h2 id="file-heading" className="text-step font-bold"><span className="text-form">1.</span> The file</h2>
-          <div
-            onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={dropFile}
-            className={`mt-4 rounded-form border border-form p-4 ${file ? '' : 'border-dashed'} ${dragging ? 'bg-rule' : ''}`}
-          >
-            <input ref={fileInput} type="file" hidden accept={ACCEPTED_ENDINGS} onChange={(event) => chooseFile(event.target.files[0])} />
-            {file ? (
-              <div className="flex flex-wrap items-center justify-between gap-x-4">
-                <p className="min-w-0">
-                  <span dir="auto" className="block font-medium break-words">{file.name}</span>
-                  <span className="block text-small text-graphite">{sizeLabel(file.size)}</span>
-                </p>
-                <Button variant="quiet" onClick={removeFile}>Remove file</Button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <Button variant="secondary" aria-describedby="file-heading" onClick={() => fileInput.current.click()}>Choose a file</Button>
-                <p className="text-small text-graphite">PDF, PNG, JPEG, WEBP, TXT or MD, up to 14 MB.</p>
-              </div>
-            )}
+      <div className="mt-8 lg:flex lg:items-start lg:gap-10">
+        <form onSubmit={submit} className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
+          <section>
+            <h2 id="file-heading" className="text-step font-bold"><span className="text-blue">1.</span> The file</h2>
+            <div
+              onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={dropFile}
+              className={`mt-4 rounded-field border border-blue p-4 ${file ? '' : 'border-dashed'} ${dragging ? 'bg-blue/10' : 'bg-desk'}`}
+            >
+              <input ref={fileInput} type="file" hidden accept={ACCEPTED_ENDINGS} onChange={(event) => chooseFile(event.target.files[0])} />
+              {file ? (
+                <div className="flex flex-wrap items-center justify-between gap-x-4">
+                  <p className="min-w-0">
+                    <span dir="auto" className="block font-medium break-words">{file.name}</span>
+                    <span className="block text-small text-graphite">{sizeLabel(file.size)}</span>
+                  </p>
+                  <Button variant="quiet" onClick={removeFile}>Remove file</Button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Button variant="secondary" aria-describedby="file-heading" onClick={() => fileInput.current.click()}>Choose a file</Button>
+                  <p className="text-small text-graphite">PDF, PNG, JPEG, WEBP, TXT or MD, up to 14 MB.</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="mt-8 border-t border-grid pt-8">
+            <h2 className="text-step font-bold">
+              <label htmlFor="prompt"><span className="text-blue">2.</span> How to teach it</label>
+            </h2>
+            <p id="prompt-hint" className="mt-2 text-graphite">
+              Say who the students are, and the language, tone and length you want. Left empty, the lesson uses the file&rsquo;s language and takes about 15 minutes.
+            </p>
+            <textarea
+              id="prompt"
+              dir="auto"
+              rows={4}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              aria-describedby="prompt-hint"
+              className="mt-4 block w-full rounded-field border border-graphite/70 bg-paper p-4"
+            />
+            <p className="mt-4 text-small text-graphite">Start from an example:</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {EXAMPLES.map((example) => (
+                <Button key={example.label} variant="secondary" className="text-small" onClick={() => setPrompt(example.prompt)}>
+                  {example.label}
+                </Button>
+              ))}
+            </div>
+          </section>
+
+          <div className="mt-8 space-y-5 border-t border-grid pt-8">
+            {problem && <Alert tone="error">{problem}</Alert>}
+            {notice && <Alert>{notice}</Alert>}
+            <Button type="submit" className="w-full sm:w-auto sm:px-10">Build lesson</Button>
+            <p className="text-small text-graphite">
+              Your file is sent to Google&rsquo;s Gemini API to build the lesson. This server does not keep it.
+            </p>
           </div>
-        </section>
+        </form>
 
-        <section className="mt-8 border-t border-rule pt-8">
-          <h2 className="text-step font-bold">
-            <label htmlFor="prompt"><span className="text-form">2.</span> How to teach it</label>
-          </h2>
-          <p id="prompt-hint" className="mt-2 text-graphite">
-            Say who the students are, and the language, tone and length you want. Left empty, the lesson uses the file&rsquo;s language and takes about 15 minutes.
-          </p>
-          <textarea
-            id="prompt"
-            dir="auto"
-            rows={4}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            aria-describedby="prompt-hint"
-            className="mt-4 block w-full rounded-form border border-form bg-paper p-3"
-          />
-          <div className="mt-1 flex flex-wrap items-center gap-x-5">
-            <p className="text-small text-graphite">Start from an example:</p>
-            {EXAMPLES.map((example) => (
-              <Button key={example.label} variant="quiet" className="text-small" onClick={() => setPrompt(example.prompt)}>
-                {example.label}
-              </Button>
-            ))}
-          </div>
-        </section>
-
-        <div className="mt-8 space-y-6 border-t border-rule pt-8">
-          {problem && <Alert tone="error">{problem}</Alert>}
-          {notice && <Alert>{notice}</Alert>}
-          <Button type="submit" className="w-full sm:w-auto sm:px-10">Build lesson</Button>
-          <p className="text-small text-graphite">
-            Your file is sent to Google&rsquo;s Gemini API to build the lesson. This server does not keep it.
-          </p>
-        </div>
-      </form>
-
-      <aside className="mt-10 border-t border-rule pt-6 lg:mt-0 lg:w-margin lg:border-s lg:border-t-0 lg:border-pen/40 lg:ps-6 lg:pt-2">
-        <h2 className="font-bold">How the lesson goes</h2>
-        <ol className="mt-3 space-y-3 text-small text-graphite">
-          {METHOD.map((line) => <li key={line}>{line}</li>)}
-        </ol>
-      </aside>
+        <aside className="mt-10 lg:mt-2 lg:w-margin">
+          <h2 className="font-bold">How the lesson goes</h2>
+          <ol className="mt-3 space-y-3 text-small text-graphite">
+            {METHOD.map((line) => <li key={line}>{line}</li>)}
+          </ol>
+        </aside>
+      </div>
     </main>
   )
 }

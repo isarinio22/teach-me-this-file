@@ -22,7 +22,7 @@ export default function Settings({ apiKey, onSave, onClose }) {
       ref={dialog}
       onClose={onClose}
       aria-labelledby="settings-title"
-      className="mt-auto w-full max-w-none border-t border-form bg-paper p-6 text-ink shadow-sheet backdrop:bg-ink/50 sm:m-auto sm:max-w-dialog sm:rounded-form sm:border"
+      className="mt-auto w-full max-w-none rounded-t-sheet bg-paper p-6 text-ink shadow-sheet backdrop:bg-ink/50 sm:m-auto sm:max-w-dialog sm:rounded-sheet sm:p-8"
     >
       <form onSubmit={save}>
         <h2 id="settings-title" className="text-step font-bold">Gemini API key</h2>
@@ -38,7 +38,7 @@ export default function Settings({ apiKey, onSave, onClose }) {
           onChange={(event) => setDraft(event.target.value)}
           autoComplete="off"
           spellCheck={false}
-          className="mt-2 block min-h-11 w-full rounded-form border border-form bg-paper px-3"
+          className="mt-2 block min-h-11 w-full rounded-field border border-graphite/70 bg-paper px-4"
         />
         <p className="mt-2 text-small text-graphite">
           Kept in this tab&rsquo;s memory only and sent with each request. It is never stored, and reloading the page forgets it.
@@ -47,7 +47,7 @@ export default function Settings({ apiKey, onSave, onClose }) {
           href="https://aistudio.google.com/apikey"
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex min-h-11 items-center text-form underline underline-offset-4 hover:text-ink"
+          className="mt-3 inline-flex min-h-11 items-center text-blue underline underline-offset-4 hover:text-ink"
         >
           Get a free key in Google AI Studio
         </a>
