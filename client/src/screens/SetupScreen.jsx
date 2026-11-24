@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import Alert from '../components/Alert.jsx'
 import Button from '../components/Button.jsx'
+import { Pencil, TutorAvatar } from '../components/Drawings.jsx'
 
 const MAX_FILE_BYTES = 14 * 1024 * 1024 // the server enforces the same limit
 const ACCEPTED_ENDINGS = '.pdf,.png,.jpg,.jpeg,.webp,.txt,.md'
@@ -68,7 +69,8 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
       </p>
 
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">
-        <form onSubmit={submit} className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
+        <form onSubmit={submit} className="relative max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
+          <Pencil className="absolute end-6 -top-3 w-36 -rotate-12 sm:w-44" />
           <section>
             <h2 id="file-heading" className="text-step font-bold"><span className="text-blue">1.</span> The file</h2>
             <div
@@ -132,7 +134,8 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
         </form>
 
         <aside className="mt-10 lg:mt-2 lg:w-margin">
-          <h2 className="font-bold">How the lesson goes</h2>
+          <TutorAvatar className="size-14" />
+          <h2 className="mt-3 font-bold">How the lesson goes</h2>
           <ol className="mt-3 space-y-3 text-small text-graphite">
             {METHOD.map((line) => <li key={line}>{line}</li>)}
           </ol>
