@@ -22,7 +22,7 @@ function planContents(file, teacherPrompt) {
 export async function countPlanTokens(apiKey, file, teacherPrompt, signal) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = planContents(file, teacherPrompt)
-  const result = await ai.models.countTokens({ model: PLAN_BACKUP_MODEL, contents, config: { abortSignal: signal } })
+  const result = await ai.models.countTokens({ model: PLAN_MODEL, contents, config: { abortSignal: signal } })
   return result.totalTokens
 }
 
@@ -113,7 +113,7 @@ export function describeError(error) {
     return { code: 'rate_limited', message: `This API key has reached its rate limit. Try again ${wait}.`, retryAfterSeconds: seconds }
   }
   if ([401, 403].includes(error.status) || error.message.includes('API key not valid')) {
-    return { code: 'invalid_key', message: 'Google did not accept this API key. Check it, or create a new one in Google AI Studio.' }
+    return { code: 'invalid_key', message: 'Google did not accept this API key. Check the key, or create a new one in Google AI Studio.' }
   }
   if (error.status >= 500) {
     return { code: 'model_busy', message: 'Google’s models are busy right now. Try again in a minute.' }

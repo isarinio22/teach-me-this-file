@@ -11,6 +11,6 @@ export const PLAN_BACKUP_MODEL = 'gemini-3.5-flash-lite'
 export const MAX_FILE_BYTES = 14 * 1024 * 1024
 
 // The largest file, in tokens, that a lesson is built from. Counted before generating anything.
-// A PDF page costs about 560 tokens whatever is on it, so this is roughly 180 pages. It leaves
-// room for the plan and one repair retry inside a free key's tokens-per-minute limit.
+// A PDF page costs about 560 tokens whatever is on it, so this is roughly 180 pages. Longer
+// files make slow, costly plans that cover too much for one lesson.
 export const TOKEN_BUDGET = 100_000
