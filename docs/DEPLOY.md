@@ -36,6 +36,8 @@ curl https://YOUR_SERVICE_URL/api/health    # {"ok":true}
 
 To see exactly which files would be uploaded, run `gcloud meta list-files-for-upload`. Files listed in `.gitignore`, including `.env`, are not uploaded.
 
+**First deploy on a new project.** It can fail with `PERMISSION_DENIED: Build failed because the default service account is missing required IAM permissions`. The build account was created seconds earlier and its permissions have not spread yet. Wait a minute and run the same command again.
+
 ## Why these settings
 
 | Setting | Reason |
@@ -58,6 +60,7 @@ No environment variables are set. Each visitor pastes their own Gemini key in th
 | Request size (HTTP/1) | 32 MiB | Uploads are capped at 14 MB. |
 | Request duration | 300 s as configured, 60 min at most | The file is processed in one request that streams progress events, so the connection is never silent. |
 | Response size | 32 MiB, not applied to streamed responses | Answers are streamed. |
+| Memory and CPU | 512 MiB and 1 vCPU, the defaults | An upload is held in memory only while its request runs: about 35 MB for the largest file with its base64 copy. |
 | Scale to zero | Instances stop when idle | The server keeps no state. The lesson plan and the student's progress live in the browser, so a restart loses nothing. |
 | Free tier | 2 million requests, 180,000 vCPU-seconds and 360,000 GiB-seconds a month | Far more than this app needs. |
 
