@@ -1,0 +1,25 @@
+GREENLEAF MARKET
+Store #0417, 22 Harbor Street
+Tel 555-0142
+
+Date: 2026-03-14  Time: 18:42
+Cashier: 07  Register: 3
+
+Whole milk 1L             1.89
+Sourdough bread           4.50
+Bananas 0.82 kg @ 1.49    1.22
+Free-range eggs x12       3.99
+Olive oil 500ml           7.25
+Dish soap                 2.79
+Paper towels x2           3.40
+
+SUBTOTAL                 25.04
+TAX 8%                    2.00
+TOTAL                    27.04
+
+VISA ************4821
+AUTH 093317
+
+Items sold: 7
+Returns accepted within 30 days with receipt.
+Thank you for shopping with us.

@@ -1,0 +1,39 @@
+Photosynthesis: How Plants Make Food
+
+What photosynthesis is
+
+Photosynthesis is the process by which plants, algae and some bacteria use light energy to make their own food. They take in two simple raw materials, carbon dioxide and water, and turn them into glucose, a sugar that stores energy. Oxygen is released as a by-product. Organisms that make their own food this way are called producers, and almost every food chain on Earth begins with them.
+
+The overall process can be summarised in a word equation:
+
+carbon dioxide + water -> glucose + oxygen (in the presence of light and chlorophyll)
+
+The balanced chemical equation is:
+
+6CO2 + 6H2O -> C6H12O6 + 6O2
+
+Where it happens
+
+In plants, photosynthesis takes place mainly in the leaves, inside small structures in the cells called chloroplasts. Chloroplasts contain a green pigment called chlorophyll. Chlorophyll absorbs light, mostly red and blue light, and reflects green light, which is why leaves look green.
+
+A leaf is well adapted to its job. It is broad and flat, so it has a large surface area to catch light. It is thin, so gases only have a short distance to travel. Tiny pores called stomata, found mostly on the underside of the leaf, let carbon dioxide diffuse in and oxygen diffuse out. Water is absorbed from the soil by the roots and carried up to the leaves through tubes called xylem vessels.
+
+Where the mass of a plant comes from
+
+It is tempting to think that a plant builds its body out of soil. In the 1600s, Jan van Helmont tested this idea. He grew a willow tree in a weighed pot of soil for five years, adding only water. The tree gained about 74 kilograms, but the soil lost only about 57 grams. We now know that most of a plant's dry mass comes from carbon dioxide in the air. The carbon atoms in glucose come from carbon dioxide, while the oxygen gas that the plant releases comes from the splitting of water molecules, not from the carbon dioxide.
+
+Two stages
+
+Photosynthesis happens in two linked stages. In the light-dependent reactions, chlorophyll absorbs light energy, and that energy is used to split water into hydrogen and oxygen. The oxygen leaves the plant as a gas. In the second stage, called the light-independent reactions or the Calvin cycle, the plant uses the energy captured in the first stage to combine carbon dioxide with hydrogen and build glucose. The second stage does not need light directly, but it stops soon after dark because it depends on products of the first stage.
+
+What the plant does with glucose
+
+Some glucose is used immediately in respiration to release energy. Plants respire all the time, day and night, just as animals do. The rest of the glucose is converted into other substances: starch for storage, cellulose for building cell walls, and, with minerals such as nitrates from the soil, proteins for growth.
+
+What limits the rate
+
+Three main factors affect how fast photosynthesis happens: light intensity, carbon dioxide concentration and temperature. If light is dim, the rate is low, and increasing the light increases the rate, but only up to a point. Beyond that point, something else, such as the amount of carbon dioxide, is in short supply and holds the rate back. The factor in shortest supply is called the limiting factor. Temperature matters because photosynthesis is controlled by enzymes. The rate rises as it gets warmer, reaches a maximum at the optimum temperature, and then falls quickly as the enzymes are damaged by heat.
+
+Why it matters
+
+Photosynthesis produces the oxygen that most living things need for respiration, and it removes carbon dioxide from the atmosphere. It is also the source of the energy stored in food, wood and fossil fuels.

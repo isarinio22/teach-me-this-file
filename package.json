@@ -1,0 +1,12 @@
+{
+  "name": "teach-me-this-file",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fixtures": "node scripts/make-fixtures.js"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}
