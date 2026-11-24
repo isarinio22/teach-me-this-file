@@ -137,6 +137,7 @@ export default function SetupScreen({ hasKey, onAddKey, file, onFileChange, prom
                 id="prompt"
                 dir="auto"
                 rows={4}
+                maxLength={2000}
                 value={prompt}
                 onChange={(event) => onPromptChange(event.target.value)}
                 aria-describedby="prompt-hint"

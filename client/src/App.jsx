@@ -1,15 +1,21 @@
-import { useReducer, useRef, useState } from 'react'
-import { buildLesson } from './api.js'
+import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
+import { buildLesson, checkServer } from './api.js'
+import Alert from './components/Alert.jsx'
 import Button from './components/Button.jsx'
 import { DeskObjects } from './components/Drawings.jsx'
 import Settings from './components/Settings.jsx'
 import { lessonReducer, removeStep } from './lesson.js'
-import LessonScreen from './screens/LessonScreen.jsx'
 import PlanScreen from './screens/PlanScreen.jsx'
 import ReportScreen from './screens/ReportScreen.jsx'
 import SetupScreen from './screens/SetupScreen.jsx'
 
+// The lesson screen carries the Markdown and math libraries, most of the app's size. It is loaded
+// separately, so the first page opens fast, and fetched early, as soon as a plan is ready.
+const loadLessonScreen = () => import('./screens/LessonScreen.jsx')
+const LessonScreen = lazy(loadLessonScreen)
+
 export default function App() {
+  const [server, setServer] = useState('checking') // checking, slow, ready or down
   // The key lives only in this component's memory: no localStorage, no cookie.
   const [apiKey, setApiKey] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -22,6 +28,17 @@ export default function App() {
   // The lesson plan and the student's progress, changed only by events (see lesson.js).
   const [lesson, dispatch] = useReducer(lessonReducer, null)
   const buildController = useRef(null)
+
+  // The server stops when nobody uses it, and the first request after that waits for it to start.
+  // Waking it on page load means the teacher sees why, instead of a long silent wait.
+  useEffect(() => {
+    const slow = setTimeout(() => setServer((now) => (now === 'checking' ? 'slow' : now)), 2000)
+    checkServer().then((ok) => {
+      clearTimeout(slow)
+      setServer(ok ? 'ready' : 'down')
+    })
+    return () => clearTimeout(slow)
+  }, [])
 
   function saveKey(key) {
     setApiKey(key)
@@ -50,6 +67,7 @@ export default function App() {
     if (result.error) return setBuildError(result.error)
     setBuilt(result)
     setScreen('plan')
+    loadLessonScreen()
   }
 
   function backToSetup() {
@@ -77,6 +95,8 @@ export default function App() {
             {apiKey ? 'Change key' : 'Add API key'}
           </Button>
         </div>
+        {server === 'slow' && <p role="status" className="mt-3 text-small text-graphite">Starting the server. After a quiet period this takes a few seconds.</p>}
+        {server === 'down' && <div className="mt-3"><Alert tone="error">The server is not answering. Check your internet connection, then reload the page.</Alert></div>}
       </header>
 
       {screen === 'setup' && (
@@ -102,7 +122,11 @@ export default function App() {
           onBack={backToSetup}
         />
       )}
-      {screen === 'lesson' && <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />}
+      {screen === 'lesson' && (
+        <Suspense fallback={<p role="status" className="mx-auto max-w-sheet px-4 py-10 text-graphite">Opening the lesson.</p>}>
+          <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />
+        </Suspense>
+      )}
       {screen === 'report' && <ReportScreen lesson={lesson} onRestart={teachAnotherFile} />}
 
       {settingsOpen && <Settings apiKey={apiKey} onSave={saveKey} onClose={() => setSettingsOpen(false)} />}

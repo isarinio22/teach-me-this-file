@@ -15,7 +15,7 @@ export default function ReportScreen({ lesson, onRestart }) {
     <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
       <h1 className="text-title font-bold md:text-display">Lesson report</h1>
       <p className="mt-3 text-lesson text-graphite">
-        <span dir="auto">{plan.title}</span>. {firstTry} of {plan.steps.length} steps right on the first try, in about {minutes} minutes.
+        <span dir="auto">{plan.title}</span>. {firstTry} of {plan.steps.length} steps right on the first try, in about {minutes} {minutes === 1 ? 'minute' : 'minutes'}.
       </p>
 
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">

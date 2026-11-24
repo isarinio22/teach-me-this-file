@@ -1,5 +1,14 @@
 // Every call to the server goes through this file.
 
+// True when the server answers. The first call after a quiet period also starts it.
+export async function checkServer() {
+  try {
+    return (await fetch('/api/health')).ok
+  } catch {
+    return false
+  }
+}
+
 const DROPPED = { code: 'stream_dropped', message: 'The connection to the server was lost. Check your connection and try again.' }
 
 // Reads a Server-Sent Events response and calls onEvent(name, data) for each message.
