@@ -1,10 +1,10 @@
-// The two drawings in the app. Both are decoration: screen readers skip them.
-import tutorPortrait from './tutor.svg'
+// The tutor's portrait and the pencil. Both are decoration: screen readers skip them.
+import tutorPortrait from './tutor.webp'
 
-// The tutor's portrait: from Notionists by Zoish, a public-domain (CC0) illustration set,
-// exported with DiceBear. The license note travels inside the SVG file.
+// The tutor is the app's author: a photo cut out and set in ink on sage, with this file's pencil
+// tucked behind the ear. One prepared 256px image, so nothing is composed in the browser.
 export function TutorAvatar({ className = '' }) {
-  return <img src={tutorPortrait} alt="" className={`shrink-0 rounded-pill bg-sage ${className}`} />
+  return <img src={tutorPortrait} alt="" className={`shrink-0 rounded-pill ${className}`} />
 }
 
 // Drawn for this app. Its colors are design tokens (fill-pencil, fill-pen, ...), so it follows styles.css.
