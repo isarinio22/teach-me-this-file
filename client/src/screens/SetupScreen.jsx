@@ -56,7 +56,7 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
   function submit(event) {
     event.preventDefault()
     if (!file) return setProblem('Choose a file first.')
-    if (!hasKey) return onAddKey()
+    if (!hasKey) return onAddKey() // opens the one API key panel; there is no second place to enter a key
     onBuild({ file, prompt })
   }
 
@@ -121,11 +121,6 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
         </section>
 
         <div className="mt-8 space-y-6 border-t border-rule pt-8">
-          {!hasKey && (
-            <Alert title="Add an API key to build the lesson" actionLabel="Add API key" onAction={onAddKey}>
-              Lessons are built with Google&rsquo;s Gemini models, using your own key. A free key works.
-            </Alert>
-          )}
           {problem && <Alert tone="error">{problem}</Alert>}
           {notice && <Alert>{notice}</Alert>}
           <Button type="submit" className="w-full sm:w-auto sm:px-10">Build lesson</Button>
