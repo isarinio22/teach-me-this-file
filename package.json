@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
+    "start": "npm start -w server",
     "fixtures": "node scripts/make-fixtures.js"
   },
   "devDependencies": {
