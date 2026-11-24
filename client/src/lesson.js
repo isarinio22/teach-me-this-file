@@ -2,9 +2,9 @@
 // network, no clock and no randomness inside, so every rule can be tested on its own.
 
 // The tutor's move after the 1st, 2nd and 3rd wrong answer in a step (rule 5, the hint ladder).
-export const LADDER = ['hint', 'reteach', 'reveal']
+const LADDER = ['hint', 'reteach', 'reveal']
 // A step's outcome, named by how many wrong answers came before the right one.
-export const OUTCOMES = ['first_try', 'after_hint', 'after_reteach', 'needs_review']
+const OUTCOMES = ['first_try', 'after_hint', 'after_reteach', 'needs_review']
 const MAX_TEACH_TURNS = 2 // tutor turns in a step before its check question appears
 const MAX_REVIEW = 2 // weakest steps asked again at the end (rule 8)
 const HISTORY = 6 // recent messages the tutor sees on each turn

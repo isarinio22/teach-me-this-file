@@ -40,6 +40,9 @@ export default function App() {
     return () => clearTimeout(slow)
   }, [])
 
+  // A new screen starts at the top, not where the last one was scrolled to.
+  useEffect(() => window.scrollTo(0, 0), [screen])
+
   function saveKey(key) {
     setApiKey(key)
     setSettingsOpen(false)

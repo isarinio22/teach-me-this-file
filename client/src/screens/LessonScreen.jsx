@@ -133,6 +133,11 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
                 </div>
               </form>
             )}
+            {lesson.phase !== 'finished' && (
+              <Button variant="quiet" className="text-small" onClick={() => { controller.current?.abort(); onFinish() }}>
+                End the lesson and see the report
+              </Button>
+            )}
           </div>
         </section>
 
