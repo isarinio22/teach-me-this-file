@@ -27,7 +27,7 @@ export default function Settings({ apiKey, onSave, onClose }) {
       <form onSubmit={save}>
         <h2 id="settings-title" className="text-step font-bold">Gemini API key</h2>
         <p className="mt-2 text-graphite">
-          Lessons are built with Google&rsquo;s Gemini models, using your own key. A free key works.
+          Lessons are built with Google&rsquo;s Gemini models, using your own key.
         </p>
 
         <label htmlFor="api-key" className="mt-6 block font-medium">API key</label>
@@ -49,7 +49,7 @@ export default function Settings({ apiKey, onSave, onClose }) {
           rel="noreferrer"
           className="mt-3 inline-flex min-h-11 items-center text-blue underline underline-offset-4 hover:text-ink"
         >
-          Get a free key in Google AI Studio
+          Get a key in Google AI Studio
         </a>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">

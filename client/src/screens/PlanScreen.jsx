@@ -29,7 +29,7 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
         <section aria-label="Lesson plan" className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
           {usedBackupModel && (
             <div className="mb-6">
-              <Alert>The main model was busy, so the backup model wrote this plan. Read the questions before you start.</Alert>
+              <Alert>The main model was not available, so a faster model wrote this plan. Read the questions before you start.</Alert>
             </div>
           )}
           <ol>

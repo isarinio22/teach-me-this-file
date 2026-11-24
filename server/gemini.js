@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODEL, PLAN_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL } from './config.js'
+import { PLAN_BACKUP_MODEL, PLAN_MODEL, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -118,21 +118,17 @@ function turnText(turn) {
   return lines.join('\n')
 }
 
-// Starts one tutor turn and returns the stream of its reply. If the model is busy before the
-// reply starts, it waits two seconds and tries once more.
+// Starts one tutor turn and returns the stream of its reply. If the tutor model is unavailable
+// before the reply starts, the one retry goes to the backup model.
 export async function startTurn(apiKey, turn, signal) {
   const ai = new GoogleGenAI({ apiKey })
-  const request = {
-    model: TUTOR_MODEL,
-    contents: [{ role: 'user', parts: [{ text: turnText(turn) }] }],
-    config: { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, abortSignal: signal },
-  }
+  const contents = [{ role: 'user', parts: [{ text: turnText(turn) }] }]
+  const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, abortSignal: signal }
   try {
-    return await ai.models.generateContentStream(request)
+    return await ai.models.generateContentStream({ model: TUTOR_MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: TUTOR_THINKING } } })
   } catch (error) {
     if (!isUnavailable(error)) throw error
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    return ai.models.generateContentStream(request)
+    return ai.models.generateContentStream({ model: TUTOR_BACKUP_MODEL, contents, config })
   }
 }
 

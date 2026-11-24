@@ -48,8 +48,8 @@ function BuildProgress({ stage, onCancel }) {
           </li>
         ))}
       </ol>
-      {stage.backup && <Alert>The main model is busy, so the backup model is writing the plan.</Alert>}
-      <p className="text-small text-graphite">This usually takes under a minute.</p>
+      {stage.backup && <Alert>The main model is not available, so a faster model is writing the plan.</Alert>}
+      <p className="text-small text-graphite">A short file takes under a minute; a long one can take two.</p>
       <Button variant="secondary" onClick={onCancel}>Cancel</Button>
     </div>
   )
