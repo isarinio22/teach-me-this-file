@@ -8,9 +8,11 @@
   ],
   "scripts": {
     "start": "npm start -w server",
-    "fixtures": "node scripts/make-fixtures.js"
+    "fixtures": "node scripts/make-fixtures.js",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "vitest": "^5.1.1"
   }
 }
