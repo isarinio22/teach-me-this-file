@@ -61,11 +61,6 @@
     outline-offset: 2px;
   }
 
-  ::placeholder {
-    color: var(--color-graphite);
-    opacity: 1;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,
