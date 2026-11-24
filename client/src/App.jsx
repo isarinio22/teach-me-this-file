@@ -1,6 +1,7 @@
 import { useReducer, useRef, useState } from 'react'
 import { buildLesson } from './api.js'
 import Button from './components/Button.jsx'
+import { DeskObjects } from './components/Drawings.jsx'
 import Settings from './components/Settings.jsx'
 import { lessonReducer, removeStep } from './lesson.js'
 import LessonScreen from './screens/LessonScreen.jsx'
@@ -67,7 +68,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-dvh">
+    <div className="relative min-h-dvh">
+      <DeskObjects />
       <header className="mx-auto max-w-sheet px-4 pt-4">
         <div className="flex min-h-14 items-center justify-between gap-4 rounded-pill bg-sage py-1.5 ps-6 pe-1.5">
           <p className="font-bold whitespace-nowrap">Teach me this file</p>

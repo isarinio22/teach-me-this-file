@@ -56,7 +56,7 @@ export default function ReportScreen({ lesson, onRestart }) {
         </section>
 
         <aside className="mt-10 lg:mt-2 lg:w-margin">
-          <TutorAvatar className="size-14" />
+          <TutorAvatar className="size-24" />
           <h2 className="mt-3 font-bold">For the next lesson</h2>
           <p className="mt-3 text-small text-graphite">
             Start from the steps that needed a second explanation or a review, and from the wrong ideas listed here. Each one is the specific belief the student showed when choosing an answer.

@@ -168,7 +168,7 @@ export default function SetupScreen({ hasKey, onAddKey, file, onFileChange, prom
         </form>
 
         <aside className="mt-10 lg:mt-2 lg:w-margin">
-          <TutorAvatar className="size-14" />
+          <TutorAvatar className="size-24" />
           <h2 className="mt-3 font-bold">How the lesson goes</h2>
           <ol className="mt-3 space-y-3 text-small text-graphite">
             {METHOD.map((line) => <li key={line}>{line}</li>)}

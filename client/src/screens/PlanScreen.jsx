@@ -8,7 +8,7 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
     return (
       <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
         <div className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8">
-          <TutorAvatar className="size-14" />
+          <TutorAvatar className="size-24" />
           <h1 className="mt-4 text-title font-bold">This file can&rsquo;t be taught as a lesson</h1>
           <p dir="auto" className="mt-3 text-lesson">{plan.reason}</p>
           <p className="mt-3 text-graphite">A lesson needs school material: a chapter, an article, a worksheet or class notes.</p>
@@ -54,7 +54,7 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
         </section>
 
         <aside className="mt-10 lg:mt-2 lg:w-margin">
-          <TutorAvatar className="size-14" />
+          <TutorAvatar className="size-24" />
           <h2 className="mt-3 font-bold">Before you start</h2>
           <p className="mt-3 text-small text-graphite">
             Remove any step you don&rsquo;t want. Each step ends with its check question. A wrong answer gets a hint aimed at that mistake; a second one gets a new explanation and a parallel question.

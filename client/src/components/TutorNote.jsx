@@ -24,7 +24,7 @@ export function LessonText({ children, className = '' }) {
 export default function TutorNote({ text, note, live, onShowSource }) {
   return (
     <div className="flex gap-3">
-      <TutorAvatar className="size-9" />
+      <TutorAvatar className="size-12" />
       <div className="min-w-0 flex-1" aria-live={live ? 'polite' : undefined}>
         <LessonText className="text-lesson">{text || '…'}</LessonText>
         {note && <p className="mt-1 text-small text-graphite">{note}</p>}
