@@ -4,8 +4,9 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MAX_FILE_BYTES, PLAN_MODEL, TOKEN_BUDGET } from './config.js'
 import { checkFile } from './files.js'
-import { countPlanTokens, describeError, generatePlan } from './gemini.js'
-import { openEventStream, sendEvent } from './stream.js'
+import { countPlanTokens, describeError, generatePlan, startTurn } from './gemini.js'
+import { turnRequestSchema } from './schemas.js'
+import { finishSplit, openEventStream, sendEvent, SPLIT_START, splitChunk } from './stream.js'
 
 const app = express()
 const port = process.env.PORT || 3001 // Cloud Run sets PORT; 3001 is for local development
@@ -63,9 +64,38 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
       sendEvent(res, 'ready', result)
     }
   } catch (error) {
-    if (!abort.signal.aborted) sendEvent(res, 'error', describeError(error))
+    if (!abort.signal.aborted) sendEvent(res, 'error', describeError(error, 'Google could not read this file. Export it again, or try another file.'))
   }
   clearInterval(keepAlive)
+  res.end()
+})
+
+// One tutor turn: the move and its context in, the tutor's words out as they are written,
+// then its JSON. If the JSON is missing or invalid the turn still counts; the lesson state
+// simply does not change, and the problem is logged.
+app.post('/api/turn', requireKey, express.json({ limit: '200kb' }), async (req, res) => {
+  const parsed = turnRequestSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ code: 'bad_request', message: 'This lesson request is not valid. Reload the page and start again.' })
+
+  const abort = new AbortController()
+  res.on('close', () => abort.abort()) // Stop in the browser closes the connection, which stops the model
+  openEventStream(res)
+  try {
+    const reply = await startTurn(res.locals.apiKey, parsed.data, abort.signal)
+    let split = SPLIT_START
+    for await (const chunk of reply) {
+      const result = splitChunk(split, chunk.text ?? '')
+      split = result.split
+      if (result.show) sendEvent(res, 'token', { text: result.show })
+    }
+    const { show, turn } = finishSplit(split)
+    if (show) sendEvent(res, 'token', { text: show })
+    if (turn) sendEvent(res, 'turn', turn)
+    else console.error(`Tutor turn without valid JSON (move: ${parsed.data.move})`)
+    sendEvent(res, 'done', {})
+  } catch (error) {
+    if (!abort.signal.aborted) sendEvent(res, 'error', describeError(error, 'Google refused this turn. Try again.'))
+  }
   res.end()
 })
 

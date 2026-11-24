@@ -125,5 +125,5 @@ test('reads the wait time out of a rate limit error', () => {
   const described = describeError(new ApiError({ status: 429, message: JSON.stringify(body) }))
   expect(described).toMatchObject({ code: 'rate_limited', retryAfterSeconds: 37 })
   expect(described.message).toContain('37 seconds')
-  expect(describeError(busy()).code).toBe('model_busy')
+  expect(describeError(busy(), '').code).toBe('model_busy')
 })

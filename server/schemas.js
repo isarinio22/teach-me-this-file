@@ -72,3 +72,41 @@ function checkPlanRules(plan, context) {
 
 export const lessonPlanSchema = planShape.superRefine(checkPlanRules)
 export const lessonPlanJsonSchema = z.toJSONSchema(planShape)
+
+// One tutor turn: the move nextMove() chose and only the context that move needs.
+// The limits stop a forged request from sending a huge prompt on someone else's behalf.
+const shortText = (max) => z.string().max(max)
+
+export const turnRequestSchema = z.object({
+  move: z.enum(['open', 'teach', 'hint', 'reteach', 'reveal', 'confirm', 'respond', 'recap', 'wrap_up']),
+  teacherPrompt: shortText(2000),
+  language: shortText(60),
+  lessonTitle: shortText(300),
+  background: shortText(2000),
+  elapsedMinutes: z.number().min(0).max(600),
+  budgetMinutes: z.number().min(1).max(120),
+  attempt: z.number().int().min(0).max(3),
+  history: z.array(z.object({ role: z.enum(['tutor', 'student']), text: shortText(4000) })).max(6),
+  outline: z.array(shortText(300)).max(8).optional(),
+  outcomes: z.array(z.object({ title: shortText(300), outcome: shortText(30) })).max(8).optional(),
+  step: z.object({
+    number: z.number().int(),
+    of: z.number().int(),
+    title: shortText(300),
+    objective: shortText(600),
+    passages: z.array(z.object({ id: shortText(20), page: z.number().int(), text: shortText(6000) })).max(12),
+  }).optional(),
+  item: z.object({
+    stem: shortText(1000),
+    options: z.array(z.object({ number: z.number().int(), text: shortText(500), correct: z.boolean().optional() })).max(4),
+    explanation: shortText(1000).optional(),
+  }).optional(),
+  chosen: z.object({ number: z.number().int(), text: shortText(500), misconception: shortText(500) }).optional(),
+  studentMessage: shortText(2000).optional(),
+})
+
+// The JSON the tutor writes after its message.
+export const turnResultSchema = z.object({
+  citedPassageIds: z.array(z.string()).max(12),
+  readyForCheck: z.boolean(),
+})
