@@ -1,0 +1,9 @@
+# Keeps secrets and local build output out of every image build.
+.env
+.env.*
+.git
+**/node_modules
+**/dist
+docs
+scenarios
+test-files
