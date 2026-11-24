@@ -2,12 +2,11 @@
 // Each model can be swapped without a code change by setting an environment variable of the
 // same name, for example PLAN_MODEL=gemini-4-carbon. Model names only: the API key is never set here.
 
-// Builds the lesson plan: one call per lesson, where quality matters most. Gemini 4 Neon is a
-// frontier model that Google describes as fast; from December 2026 it is also cheaper than Carbon.
-export const PLAN_MODEL = process.env.PLAN_MODEL || 'gemini-4-neon'
+// Builds the lesson plan: one call per lesson, where quality matters most. Gemini 4 Hydrogen is the
+// strongest model a free key can call, so every model the app uses can be tested on a free key.
+export const PLAN_MODEL = process.env.PLAN_MODEL || 'gemini-4-hydrogen'
 
-// Takes over for the one retry when PLAN_MODEL is busy, rate limited, or not open to this key
-// (Gemini 4 is paid only, so a free key gets a plan from this model instead of an error).
+// Takes over for the one retry when PLAN_MODEL is busy, rate limited, or not open to this key.
 export const PLAN_BACKUP_MODEL = process.env.PLAN_BACKUP_MODEL || 'gemini-3.8-flash'
 
 // Speaks on every turn of the lesson, where waiting feels bad: the strongest Flash model, thinking little.
