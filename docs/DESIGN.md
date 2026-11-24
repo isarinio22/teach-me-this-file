@@ -54,12 +54,10 @@ Options are numbered bubbles, 1 to 4, as on a psychometric answer sheet. Numbers
 
 The lesson path uses the same pen: a tick (right first time), a tick with one dot (after a hint), a tick with two dots (after a reteach), a circled number (needs review).
 
-## Two drawings
+## The pencil and the tutor
 
-Both were drawn for this app as plain SVG, and their colors are the tokens above.
-
-- **The pencil** rests on the corner of the sheet. It is the student's tool, and the reason filled bubbles are graphite.
-- **The tutor** is a small portrait on a sage circle. It marks what the tutor says: the method notes on the Setup screen, and each tutor note in the lesson. Tutor text itself stays on the sheet as notes, not in chat bubbles, because explanations, tables and formulas need the full width on a phone.
+- **The pencil** was drawn for this app as SVG, in the color tokens above. It rests on the corner of the sheet: it is the student's tool, and the reason filled bubbles are graphite.
+- **The tutor** is an illustrated portrait: a teacher in a lab coat with a finger raised, making a point. It comes from [Notionists](https://heyzoish.gumroad.com/l/notionists) by Zoish, a public-domain (CC0) illustration set, exported with DiceBear. Its black ink line art matches the pen-and-pencil look. It sits on a sage circle and marks what the tutor says: the method notes on the Setup screen and each tutor note in the lesson. Tutor text itself stays on the sheet as notes, not in chat bubbles, because explanations, tables and formulas need the full width on a phone.
 
 ## Screens
 
@@ -110,7 +108,9 @@ On a phone the margin becomes a bottom sheet opened by "Show source".
 | Uppercase labels above sections | Reads as a template | Numbered sentence-case headings, like questions on a worksheet |
 | Letters A to D on the options | Latin letters in a Hebrew or Arabic lesson | Numbers 1 to 4 |
 
-**Round 2, after the first version was live.** That version was a printed exam page: a serif typeface, square corners, hairlines, no drawings. It was correct and it felt stern for school students. The change of direction took its cue from [Taitor](https://phenomenonstudio.com/projects/taitor-interactive-ai-tutoring-for-kids-and-teens), a tutoring app for kids and teens designed by Phenomenon Studio, which feels approachable without being childish. What was borrowed are general ideas: graph paper, one soft white sheet, pill buttons, a clear blue, a calm green header, a friendly sans, a face for the tutor. Nothing of Taitor's own was used: no mascot, illustration, logo or screen. The pencil and the tutor here were drawn for this app.
+**Round 2, after the first version was live.** That version was a printed exam page: a serif typeface, square corners, hairlines, no drawings. It was correct and it felt stern for school students. The change of direction took its cue from [Taitor](https://phenomenonstudio.com/projects/taitor-interactive-ai-tutoring-for-kids-and-teens), a tutoring app for kids and teens designed by Phenomenon Studio, which feels approachable without being childish. What was borrowed are general ideas: graph paper, one soft white sheet, pill buttons, a clear blue, a calm green header, a friendly sans, a face for the tutor. Nothing of Taitor's own was used: no mascot, illustration, logo or screen.
+
+**Round 3, the tutor's face.** The first tutor was a simple geometric face drawn for the app. Next to everything else it looked like generic flat AI art. It was replaced by a portrait from a professional, public-domain illustration set, chosen from six finalists for reading well at 36 pixels as well as large.
 
 Two earlier rules were relaxed on purpose. "No rounded cards with soft shadows" became "one sheet per screen". The limit of six colors became nine, because a pencil has to be yellow.
 
