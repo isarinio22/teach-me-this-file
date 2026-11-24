@@ -20,14 +20,42 @@ const METHOD = [
   'It stays inside your file.',
 ]
 
+// The server's progress events, grouped into the three stages the teacher sees.
+const STAGES = [
+  { events: ['sending'], label: 'Sending the file' },
+  { events: ['received', 'reading'], label: 'Reading the file' },
+  { events: ['planning'], label: 'Writing the lesson plan' },
+]
+
 function sizeLabel(bytes) {
   if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
-  const [file, setFile] = useState(null)
-  const [prompt, setPrompt] = useState('')
+function BuildProgress({ stage, onCancel }) {
+  const current = STAGES.findIndex((item) => item.events.includes(stage.name))
+  return (
+    <div className="space-y-5">
+      <ol className="space-y-3" aria-live="polite">
+        {STAGES.map((item, index) => (
+          <li key={item.label} className={`flex items-center gap-3 ${index > current ? 'text-graphite' : 'font-medium'}`}>
+            <span
+              aria-hidden="true"
+              className={`size-5 shrink-0 rounded-pill border-2 ${index < current ? 'border-graphite bg-graphite' : ''} ${index === current ? 'border-blue motion-safe:animate-pulse' : ''} ${index > current ? 'border-graphite/40' : ''}`}
+            />
+            {item.label}
+            {index < current && <span className="sr-only">, done</span>}
+          </li>
+        ))}
+      </ol>
+      {stage.backup && <Alert>The main model is busy, so the backup model is writing the plan.</Alert>}
+      <p className="text-small text-graphite">This usually takes under a minute.</p>
+      <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+    </div>
+  )
+}
+
+export default function SetupScreen({ hasKey, onAddKey, file, onFileChange, prompt, onPromptChange, onBuild, stage, onCancel, error }) {
   const [problem, setProblem] = useState('')
   const [dragging, setDragging] = useState(false)
   const fileInput = useRef(null)
@@ -35,16 +63,16 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
   function chooseFile(chosen) {
     if (!chosen) return
     if (chosen.size > MAX_FILE_BYTES) {
-      setFile(null)
+      onFileChange(null)
       setProblem(`“${chosen.name}” is ${sizeLabel(chosen.size)}. The limit is 14 MB. Split the file or export a smaller version.`)
       return
     }
-    setFile(chosen)
+    onFileChange(chosen)
     setProblem('')
   }
 
   function removeFile() {
-    setFile(null)
+    onFileChange(null)
     fileInput.current.value = '' // otherwise choosing the same file again would not fire onChange
   }
 
@@ -58,7 +86,7 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
     event.preventDefault()
     if (!file) return setProblem('Choose a file first.')
     if (!hasKey) return onAddKey() // opens the one API key panel; there is no second place to enter a key
-    onBuild({ file, prompt })
+    onBuild()
   }
 
   return (
@@ -71,62 +99,68 @@ export default function SetupScreen({ hasKey, onAddKey, onBuild, notice }) {
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">
         <form onSubmit={submit} className="relative max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
           <Pencil className="absolute end-6 -top-3 w-36 -rotate-12 sm:w-44" />
-          <section>
-            <h2 id="file-heading" className="text-step font-bold"><span className="text-blue">1.</span> The file</h2>
-            <div
-              onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={dropFile}
-              className={`mt-4 rounded-field border border-blue p-4 ${file ? '' : 'border-dashed'} ${dragging ? 'bg-blue/10' : 'bg-desk'}`}
-            >
-              <input ref={fileInput} type="file" hidden accept={ACCEPTED_ENDINGS} onChange={(event) => chooseFile(event.target.files[0])} />
-              {file ? (
-                <div className="flex flex-wrap items-center justify-between gap-x-4">
-                  <p className="min-w-0">
-                    <span dir="auto" className="block font-medium break-words">{file.name}</span>
-                    <span className="block text-small text-graphite">{sizeLabel(file.size)}</span>
-                  </p>
-                  <Button variant="quiet" onClick={removeFile}>Remove file</Button>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <Button variant="secondary" aria-describedby="file-heading" onClick={() => fileInput.current.click()}>Choose a file</Button>
-                  <p className="text-small text-graphite">PDF, PNG, JPEG, WEBP, TXT or MD, up to 14 MB.</p>
-                </div>
-              )}
-            </div>
-          </section>
+          <fieldset disabled={Boolean(stage)}>
+            <section>
+              <h2 id="file-heading" className="text-step font-bold"><span className="text-blue">1.</span> The file</h2>
+              <div
+                onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={dropFile}
+                className={`mt-4 rounded-field border border-blue p-4 ${file ? '' : 'border-dashed'} ${dragging ? 'bg-blue/10' : 'bg-desk'}`}
+              >
+                <input ref={fileInput} type="file" hidden accept={ACCEPTED_ENDINGS} onChange={(event) => chooseFile(event.target.files[0])} />
+                {file ? (
+                  <div className="flex flex-wrap items-center justify-between gap-x-4">
+                    <p className="min-w-0">
+                      <span dir="auto" className="block font-medium break-words">{file.name}</span>
+                      <span className="block text-small text-graphite">{sizeLabel(file.size)}</span>
+                    </p>
+                    <Button variant="quiet" onClick={removeFile}>Remove file</Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <Button variant="secondary" aria-describedby="file-heading" onClick={() => fileInput.current.click()}>Choose a file</Button>
+                    <p className="text-small text-graphite">PDF, PNG, JPEG, WEBP, TXT or MD, up to 14 MB.</p>
+                  </div>
+                )}
+              </div>
+            </section>
 
-          <section className="mt-8 border-t border-grid pt-8">
-            <h2 className="text-step font-bold">
-              <label htmlFor="prompt"><span className="text-blue">2.</span> How to teach it</label>
-            </h2>
-            <p id="prompt-hint" className="mt-2 text-graphite">
-              Say who the students are, and the language, tone and length you want. Left empty, the lesson uses the file&rsquo;s language and takes about 15 minutes.
-            </p>
-            <textarea
-              id="prompt"
-              dir="auto"
-              rows={4}
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              aria-describedby="prompt-hint"
-              className="mt-4 block w-full rounded-field border border-graphite/70 bg-paper p-4"
-            />
-            <p className="mt-4 text-small text-graphite">Start from an example:</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {EXAMPLES.map((example) => (
-                <Button key={example.label} variant="secondary" className="text-small" onClick={() => setPrompt(example.prompt)}>
-                  {example.label}
-                </Button>
-              ))}
-            </div>
-          </section>
+            <section className="mt-8 border-t border-grid pt-8">
+              <h2 className="text-step font-bold">
+                <label htmlFor="prompt"><span className="text-blue">2.</span> How to teach it</label>
+              </h2>
+              <p id="prompt-hint" className="mt-2 text-graphite">
+                Say who the students are, and the language, tone and length you want. Left empty, the lesson uses the file&rsquo;s language and takes about 15 minutes.
+              </p>
+              <textarea
+                id="prompt"
+                dir="auto"
+                rows={4}
+                value={prompt}
+                onChange={(event) => onPromptChange(event.target.value)}
+                aria-describedby="prompt-hint"
+                className="mt-4 block w-full rounded-field border border-graphite/70 bg-paper p-4"
+              />
+              <p className="mt-4 text-small text-graphite">Start from an example:</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {EXAMPLES.map((example) => (
+                  <Button key={example.label} variant="secondary" className="text-small" onClick={() => onPromptChange(example.prompt)}>
+                    {example.label}
+                  </Button>
+                ))}
+              </div>
+            </section>
+          </fieldset>
 
           <div className="mt-8 space-y-5 border-t border-grid pt-8">
             {problem && <Alert tone="error">{problem}</Alert>}
-            {notice && <Alert>{notice}</Alert>}
-            <Button type="submit" className="w-full sm:w-auto sm:px-10">Build lesson</Button>
+            {error && !stage && <Alert tone="error">{error.message}</Alert>}
+            {stage ? (
+              <BuildProgress stage={stage} onCancel={onCancel} />
+            ) : (
+              <Button type="submit" className="w-full sm:w-auto sm:px-10">Build lesson</Button>
+            )}
             <p className="text-small text-graphite">
               Your file is sent to Google&rsquo;s Gemini API to build the lesson. This server does not keep it.
             </p>

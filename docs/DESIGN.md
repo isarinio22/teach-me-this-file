@@ -42,7 +42,7 @@ Weights: 400 for reading, 500 for controls, 700 for headings. Sentence case ever
 - **Widths:** the sheet is 40rem; the margin column is 15rem.
 - **Radii:** `field` 14px, `sheet` 24px, and `pill` for buttons and answer bubbles.
 - **One sheet per screen.** Each screen has a single white sheet with the only shadow in the app. Inside it, sections are separated by hairlines, not by more cards. Notes in the margin sit directly on the graph paper.
-- **Motion:** two animations only: a bubble filling in, and a pen mark being drawn. Both are skipped under `prefers-reduced-motion`. Tutor text streams in; nothing fades.
+- **Motion:** a bubble filling in, a pen mark being drawn, and a slow pulse on the stage that is running while a lesson is built. All three are skipped under `prefers-reduced-motion`. Tutor text streams in; nothing fades.
 
 ## The one bold element: the answer sheet
 
