@@ -50,6 +50,30 @@
   --container-page: 40rem;
   --container-margin: 15rem;
   --container-sheet: 60rem;
+
+  /* The only animations: a pen mark being drawn, and a bubble being filled in pencil. */
+  --animate-draw: draw 0.45s ease-out both;
+  --animate-fill: fill 0.18s ease-out both;
+  @keyframes draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes fill {
+    from { transform: scale(0.6); opacity: 0.4; }
+    to { transform: scale(1); opacity: 1; }
+  }
+}
+
+/* Lesson text written in Markdown: tutor notes and passages from the file. */
+@layer components {
+  .lesson-text > * + * { margin-top: 0.75em; }
+  .lesson-text ul { list-style: disc; padding-inline-start: 1.25em; }
+  .lesson-text ol { list-style: decimal; padding-inline-start: 1.25em; }
+  .lesson-text strong { font-weight: 700; }
+  .lesson-text table { border-collapse: collapse; font-size: var(--text-small); }
+  .lesson-text th, .lesson-text td { border: 1px solid var(--color-grid); padding: 0.25rem 0.5rem; text-align: start; }
+  .lesson-text th { background-color: var(--color-desk); }
+  .lesson-text .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: 0.25rem; }
 }
 
 @layer base {

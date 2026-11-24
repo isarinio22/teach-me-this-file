@@ -3,7 +3,7 @@ import Button from '../components/Button.jsx'
 import { TutorAvatar } from '../components/Drawings.jsx'
 
 // The plan as a teacher reads it: each step's goal and the question that checks it.
-export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStart, onBack, notice }) {
+export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStart, onBack }) {
   if (!plan.teachable) {
     return (
       <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
@@ -47,12 +47,9 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
               </li>
             ))}
           </ol>
-          <div className="space-y-5 border-t border-grid pt-8">
-            {notice && <Alert>{notice}</Alert>}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Button className="w-full sm:w-auto sm:px-10" onClick={onStart}>Start lesson</Button>
-              <Button variant="quiet" onClick={onBack}>Use another file</Button>
-            </div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-grid pt-8">
+            <Button className="w-full sm:w-auto sm:px-10" onClick={onStart}>Start lesson</Button>
+            <Button variant="quiet" onClick={onBack}>Use another file</Button>
           </div>
         </section>
 

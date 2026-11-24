@@ -42,3 +42,32 @@ export async function buildLesson({ file, prompt, apiKey, signal, onStage }) {
   }
   return result
 }
+
+// Runs one tutor turn. onText(textSoFar) is called as the words arrive.
+// Resolves to { text, turn } when it finished, { text, stopped: true } after Stop,
+// or { text, error } when it failed, keeping whatever text had arrived.
+export async function streamTurn({ request, apiKey, signal, onText }) {
+  let text = ''
+  let turn = null
+  let finished = false
+  let error = null
+  try {
+    const response = await fetch('/api/turn', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      signal,
+    })
+    if (!response.ok) return { text, error: await response.json() }
+    await readEvents(response, (name, data) => {
+      if (name === 'token') onText((text += data.text))
+      else if (name === 'turn') turn = data
+      else if (name === 'done') finished = true
+      else if (name === 'error') error = data
+    })
+  } catch {
+    if (signal.aborted) return { text, stopped: true }
+  }
+  if (error || !finished) return { text, error: error ?? DROPPED }
+  return { text, turn }
+}

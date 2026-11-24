@@ -1,22 +1,25 @@
-import { useRef, useState } from 'react'
+import { useReducer, useRef, useState } from 'react'
 import { buildLesson } from './api.js'
 import Button from './components/Button.jsx'
 import Settings from './components/Settings.jsx'
-import { removeStep } from './lesson.js'
+import { lessonReducer, removeStep } from './lesson.js'
+import LessonScreen from './screens/LessonScreen.jsx'
 import PlanScreen from './screens/PlanScreen.jsx'
+import ReportScreen from './screens/ReportScreen.jsx'
 import SetupScreen from './screens/SetupScreen.jsx'
 
 export default function App() {
   // The key lives only in this component's memory: no localStorage, no cookie.
   const [apiKey, setApiKey] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [screen, setScreen] = useState('setup') // 'setup' or 'plan'
+  const [screen, setScreen] = useState('setup') // setup, plan, lesson or report
   const [file, setFile] = useState(null)
   const [prompt, setPrompt] = useState('')
   const [stage, setStage] = useState(null) // while a lesson is being built: { name, backup }
   const [buildError, setBuildError] = useState(null)
   const [built, setBuilt] = useState(null) // { plan, usedBackupModel }
-  const [notice, setNotice] = useState('')
+  // The lesson plan and the student's progress, changed only by events (see lesson.js).
+  const [lesson, dispatch] = useReducer(lessonReducer, null)
   const buildController = useRef(null)
 
   function saveKey(key) {
@@ -45,12 +48,21 @@ export default function App() {
     if (result.cancelled) return
     if (result.error) return setBuildError(result.error)
     setBuilt(result)
-    setNotice('')
     setScreen('plan')
   }
 
   function backToSetup() {
     if (!built.plan.teachable) chooseFile(null)
+    setScreen('setup')
+  }
+
+  function startLesson() {
+    dispatch({ type: 'started', plan: built.plan, teacherPrompt: prompt, now: Date.now(), seed: Math.random() })
+    setScreen('lesson')
+  }
+
+  function teachAnotherFile() {
+    chooseFile(null)
     setScreen('setup')
   }
 
@@ -84,11 +96,12 @@ export default function App() {
           plan={built.plan}
           usedBackupModel={built.usedBackupModel}
           onRemoveStep={(stepId) => setBuilt({ ...built, plan: removeStep(built.plan, stepId) })}
-          onStart={() => setNotice('The plan is ready. The lesson screen is the next part of this app to be written.')}
+          onStart={startLesson}
           onBack={backToSetup}
-          notice={notice}
         />
       )}
+      {screen === 'lesson' && <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />}
+      {screen === 'report' && <ReportScreen lesson={lesson} onRestart={teachAnotherFile} />}
 
       {settingsOpen && <Settings apiKey={apiKey} onSave={saveKey} onClose={() => setSettingsOpen(false)} />}
     </div>
