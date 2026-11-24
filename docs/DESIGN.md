@@ -3,42 +3,45 @@
 **Subject:** a one-to-one lesson with a good teacher, used by school students, often on a phone.
 **Primary job:** keep the student on one step and one question at a time.
 
-## The idea: a worksheet, not a chat
+## The idea: a notebook page, not a chat
 
-The screen is treated as school paper. Four materials, each with one job:
+The screen is a sheet of white paper lying on a graph-paper desk. The student writes in pencil; the teacher marks in red pen.
 
 | Color | Hex | Material | Used for | Contrast on paper |
 |---|---|---|---|---|
-| Paper | `#FAFBFC` | Exam paper, cool white | Every background | |
-| Ink | `#18202B` | Printed text | Lesson text, headings | 15.8 : 1 |
-| Graphite | `#454B54` | Pencil | Filled bubbles, secondary text | 8.5 : 1 |
-| Form blue | `#14639E` | The ink an answer sheet is printed in | Bubbles, field borders, buttons, links, focus | 6.1 : 1 |
-| Pen red | `#C2203A` | The teacher's pen | Marks on answers, step outcomes, errors | 5.7 : 1 |
-| Rule | `#D3E2EE` | Ruled lines | Hairlines between sections; never text | decorative |
+| Paper | `#FFFFFF` | The sheet | The one surface content sits on; fields | |
+| Desk | `#F5F7FC` | Graph paper | The page background | |
+| Grid | `#DFE6F6` | Its lines | Grid lines and hairlines; never text | decorative |
+| Ink | `#151A23` | Printed text | Text and headings | 17.4 : 1 |
+| Graphite | `#4A515C` | Pencil | Filled bubbles, secondary text | 8.0 : 1 |
+| Blue | `#2F62E0` | Ballpoint | The main button, links, numbers, focus | 5.3 : 1 |
+| Pen red | `#C2203A` | The teacher's pen | Marks on answers, step outcomes, errors | 5.9 : 1 |
+| Sage | `#D3E0C1` | A calm band | The header; the tutor's background | ink on sage 12.6 : 1 |
+| Pencil | `#F6CD4C` | A school pencil | The pencil drawing; the highlight on a cited passage | decorative |
 
-The student writes in pencil; the teacher marks in pen. Nothing else on the screen uses red.
+Red is reserved for the teacher's pen: marks and errors, nothing else.
 
 ## Type
 
-One family: **Frank Ruhl Libre** (variable, self-hosted with `@fontsource`). It covers Latin, accented Latin and Hebrew. It is the typeface of Hebrew textbooks, and as a serif it sits naturally next to KaTeX formulas. Arabic falls back to the system font.
+One family: **Rubik** (variable, self-hosted with `@fontsource`). It covers Latin, accented Latin, Hebrew and Arabic, so a lesson in a right-to-left language uses the same typeface as the interface. KaTeX renders the math.
 
 | Token | Size / line height | Role |
 |---|---|---|
 | `small` | 14 / 20 | Hints under fields, file details |
 | `body` | 16 / 24 | Interface text, buttons, labels |
-| `lesson` | 18 / 30 | Tutor notes and passages: the reading size |
-| `step` | 22 / 29 | Step titles, section headings |
-| `title` | 28 / 34 | Screen title on a phone |
-| `display` | 36 / 42 | Screen title on desktop |
+| `lesson` | 18 / 28 | Tutor notes and passages: the reading size |
+| `step` | 22 / 28 | Step titles, section headings |
+| `title` | 30 / 36 | Screen title on a phone |
+| `display` | 40 / 46 | Screen title on desktop |
 
 Weights: 400 for reading, 500 for controls, 700 for headings. Sentence case everywhere.
 
-## Space, shape, lines, motion
+## Space, shape, motion
 
-- **Spacing:** one 4px unit, used in steps of 1, 2, 3, 4, 6, 8, 12. Tap targets are at least 44px.
-- **Widths:** the page column is 40rem; the margin column for sources is 16rem.
-- **Radii:** `form` 3px for fields, buttons and panels, like printed boxes; `bubble` for the round answer bubbles. Nothing in between.
-- **Lines, not cards:** sections are separated by ruled hairlines. The only shadow is under the mobile bottom sheet. The margin column is set off by a thin red margin line, as in a notebook.
+- **Spacing:** one 4px unit, used in steps of 1, 2, 3, 4, 5, 6, 8, 10, 12. Tap targets are at least 44px.
+- **Widths:** the sheet is 40rem; the margin column is 15rem.
+- **Radii:** `field` 14px, `sheet` 24px, and `pill` for buttons and answer bubbles.
+- **One sheet per screen.** Each screen has a single white sheet with the only shadow in the app. Inside it, sections are separated by hairlines, not by more cards. Notes in the margin sit directly on the graph paper.
 - **Motion:** two animations only: a bubble filling in, and a pen mark being drawn. Both are skipped under `prefers-reduced-motion`. Tutor text streams in; nothing fades.
 
 ## The one bold element: the answer sheet
@@ -51,55 +54,66 @@ Options are numbered bubbles, 1 to 4, as on a psychometric answer sheet. Numbers
 
 The lesson path uses the same pen: a tick (right first time), a tick with one dot (after a hint), a tick with two dots (after a reteach), a circled number (needs review).
 
+## Two drawings
+
+Both were drawn for this app as plain SVG, and their colors are the tokens above.
+
+- **The pencil** rests on the corner of the sheet. It is the student's tool, and the reason filled bubbles are graphite.
+- **The tutor** is a small portrait on a sage circle. It marks what the tutor says: the method notes on the Setup screen, and each tutor note in the lesson. Tutor text itself stays on the sheet as notes, not in chat bubbles, because explanations, tables and formulas need the full width on a phone.
+
 ## Screens
 
 ```
 SETUP (phone)                     PLAN
-┌──────────────────────────────┐  ┌──────────────────────────────┐
+╭──────────────────────────────╮  ╭──────────────────────────────╮
 │ Teach me this file [API key] │  │ Photosynthesis               │
-├──────────────────────────────┤  │ 6 steps. About 15 minutes.   │
-│ Turn a file into a lesson    │  ├──────────────────────────────┤
-│ 1. The file                  │  │ 1 Where the mass comes from  │
-│ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┐ │  │   Objective: explain that …  │
-│ │ [Choose a file]          │ │  │   Check: "A tree gains …"    │
-│ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘ │  │                [Remove step] │
-│ 2. How to teach it           │  ├──────────────────────────────┤
-│ ┌──────────────────────────┐ │  │ 2 Two stages                 │
-│ │ Teach this to 7th …      │ │  │   …                          │
+╰──────────────────────────────╯  │ 6 steps. About 15 minutes.   │
+  Turn a file into a lesson       ├──────────────────────────────┤
+╭───────────────────── ✎ ──────╮  │ 1 Where the mass comes from  │
+│ 1. The file                  │  │   Objective: explain that …  │
+│ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┐ │  │   Check: "A tree gains …"    │
+│ │ (Choose a file)          │ │  │                [Remove step] │
+│ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘ │  ├──────────────────────────────┤
+│ 2. How to teach it           │  │ 2 Two stages                 │
+│ ┌──────────────────────────┐ │  │   …                          │
 │ └──────────────────────────┘ │  ├──────────────────────────────┤
-│ [       Build lesson       ] │  │ [       Start lesson       ] │
-└──────────────────────────────┘  └──────────────────────────────┘
+│ (       Build lesson       ) │  │ (       Start lesson       ) │
+╰──────────────────────────────╯  ╰──────────────────────────────╯
+  ☺ How the lesson goes
 
-LESSON (desktop: text + margin)               REPORT
-┌───────────────────────────┬──────────────┐  ┌──────────────────────────────┐
-│ ✓  ✓. (3) 4  5  6         │              │  │ Lesson report                │
-│ Step 3 of 6               │              │  │ 4 of 6 right on the first try│
-│ Where the mass comes from │ Source, p. 2 │  ├──────────────────────────────┤
-│ Tutor note, full width,   │ "The tree    │  │ ✓  Step one     First try    │
-│ no bubble, no avatar.     │  gained 74   │  │ ✓. Step two     After a hint │
-│              my reply   ▐ │  kg, but …"  │  │ ○  Step three   Needs review │
-│ ┌ Answer sheet ─────────┐ │              │  ├──────────────────────────────┤
-│ │ (1) From the soil   ✗ │ │              │  │ Misconceptions caught        │
-│ │ (●) From the air      │ │              │  │ Thinks plants build their    │
-│ │ [Check answer]        │ │              │  │ body from soil (step 3)      │
-│ └───────────────────────┘ │              │  ├──────────────────────────────┤
-│ [Ask a question]   [Stop] │              │  │ [Teach another file]         │
-└───────────────────────────┴──────────────┘  └──────────────────────────────┘
+LESSON (desktop: sheet + margin)              REPORT
+╭───────────────────────────╮                 ╭──────────────────────────────╮
+│ ✓  ✓. (3) 4  5  6         │                 │ Lesson report                │
+│ Step 3 of 6               │                 │ 4 of 6 right on the first try│
+│ Where the mass comes from │  Source, p. 2   ├──────────────────────────────┤
+│ ☺ Tutor note, full width, │  "The tree      │ ✓  Step one     First try    │
+│   on the sheet.           │   gained 74     │ ✓. Step two     After a hint │
+│              (my reply)   │   kg, but …"    │ ○  Step three   Needs review │
+│ ┌ Answer sheet ─────────┐ │                 ├──────────────────────────────┤
+│ │ (1) From the soil   ✗ │ │                 │ Misconceptions caught        │
+│ │ (●) From the air      │ │                 │ Thinks plants build their    │
+│ │ (Check answer)        │ │                 │ body from soil (step 3)      │
+│ └───────────────────────┘ │                 ├──────────────────────────────┤
+│ (Ask a question)   (Stop) │                 │ (Teach another file)         │
+╰───────────────────────────╯                 ╰──────────────────────────────╯
 On a phone the margin becomes a bottom sheet opened by "Show source".
 ```
 
-## What changed after checking against the avoid list
+## How the design got here
 
-| First draft | Problem | Now |
+**Round 1, before any code.** The first plan was checked against a list of generic patterns:
+
+| First draft | Problem | Decision that stayed |
 |---|---|---|
-| A sans such as Rubik or Heebo | The default for any Hebrew-capable interface; clashes with KaTeX's serif math | Frank Ruhl Libre |
-| Green for right, red for wrong | Traffic-light feedback is generic and fails for color-blind students | One red pen; a tick or a cross carries the meaning |
-| Warm off-white paper with the red accent | Too close to "cream with terracotta" | Cool white paper, a blue-leaning red |
-| The plan and the report as cards with shadows | Identical rounded cards | Ruled rows on one page, 3px corners, one shadow in the whole app |
+| Green for right, red for wrong | Traffic-light feedback fails for color-blind students | One red pen; a tick or a cross carries the meaning |
 | A progress bar | Says how far, not how it went | A sequence of numbered steps, each with its outcome mark |
-| Uppercase labels above sections; "Step 3 of 6 · 6 min left" | All-caps eyebrows; dot-joined meta strings | Numbered sentence-case headings, like questions on a worksheet; separate lines |
+| Uppercase labels above sections | Reads as a template | Numbered sentence-case headings, like questions on a worksheet |
 | Letters A to D on the options | Latin letters in a Hebrew or Arabic lesson | Numbers 1 to 4 |
+
+**Round 2, after the first version was live.** That version was a printed exam page: a serif typeface, square corners, hairlines, no drawings. It was correct and it felt stern for school students. The change of direction took its cue from [Taitor](https://phenomenonstudio.com/projects/taitor-interactive-ai-tutoring-for-kids-and-teens), a tutoring app for kids and teens designed by Phenomenon Studio, which feels approachable without being childish. What was borrowed are general ideas: graph paper, one soft white sheet, pill buttons, a clear blue, a calm green header, a friendly sans, a face for the tutor. Nothing of Taitor's own was used: no mascot, illustration, logo or screen. The pencil and the tutor here were drawn for this app.
+
+Two earlier rules were relaxed on purpose. "No rounded cards with soft shadows" became "one sheet per screen". The limit of six colors became nine, because a pencil has to be yellow.
 
 ## Quality floor
 
-WCAG AA contrast (table above). Visible focus ring in form blue. 44px tap targets. `prefers-reduced-motion` respected. `aria-live="polite"` on streaming text. Works at 375px wide. `dir="auto"` on lesson content, logical properties for layout.
+WCAG AA contrast (table above). Visible focus ring in blue. 44px tap targets. `prefers-reduced-motion` respected. `aria-live="polite"` on streaming text. Works at 375px wide. `dir="auto"` on lesson content, logical properties for layout.
