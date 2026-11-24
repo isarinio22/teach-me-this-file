@@ -4,14 +4,18 @@
   "private": true,
   "type": "module",
   "workspaces": [
+    "client",
     "server"
   ],
   "scripts": {
+    "dev": "concurrently -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
     "start": "npm start -w server",
-    "fixtures": "node scripts/make-fixtures.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "fixtures": "node scripts/make-fixtures.js"
   },
   "devDependencies": {
+    "concurrently": "^10.0.7",
     "pdf-lib": "^1.17.1",
     "vitest": "^5.1.1"
   }

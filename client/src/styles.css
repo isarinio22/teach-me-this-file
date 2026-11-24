@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+  Design tokens: the only place where colors and sizes are written as raw values.
+  Tailwind turns each token into utility classes: --color-paper gives bg-paper and text-paper,
+  --text-lesson gives text-lesson, --radius-form gives rounded-form, and so on.
+  "--color-*: initial" removes Tailwind's default palette, so components cannot use
+  a color that is not listed here. The reasoning is in docs/DESIGN.md.
+*/
+@theme {
+  --color-*: initial;
+  --color-paper: #fafbfc;
+  --color-ink: #18202b;
+  --color-graphite: #454b54;
+  --color-form: #14639e;
+  --color-pen: #c2203a;
+  --color-rule: #d3e2ee;
+
+  --font-*: initial;
+  --font-page: "Frank Ruhl Libre Variable", "Geeza Pro", "Noto Naskh Arabic", "Segoe UI", serif;
+  --default-font-family: var(--font-page);
+
+  --text-*: initial;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.25rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-lesson: 1.125rem;
+  --text-lesson--line-height: 1.875rem;
+  --text-step: 1.375rem;
+  --text-step--line-height: 1.8125rem;
+  --text-title: 1.75rem;
+  --text-title--line-height: 2.125rem;
+  --text-display: 2.25rem;
+  --text-display--line-height: 2.625rem;
+
+  --radius-*: initial;
+  --radius-form: 0.1875rem;
+  --radius-bubble: 9999px;
+
+  --shadow-*: initial;
+  --shadow-sheet: 0 -0.25rem 1.5rem rgb(24 32 43 / 0.18);
+
+  --container-*: initial;
+  --container-dialog: 26rem;
+  --container-page: 40rem;
+  --container-margin: 16rem;
+  --container-sheet: 60rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-form);
+    outline-offset: 2px;
+  }
+
+  ::placeholder {
+    color: var(--color-graphite);
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
