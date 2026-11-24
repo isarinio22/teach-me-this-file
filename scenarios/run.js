@@ -39,18 +39,21 @@ async function lessonPlan(name) {
   return saved
 }
 
-// One real tutor turn for whatever move the lesson state calls for.
-async function tutor(state) {
-  const { stream, model } = await patiently(() => startTurn(apiKey, turnRequest(state, nextMove(state), Date.now())))
-  answeredBy[model] = (answeredBy[model] ?? 0) + 1
-  let split = SPLIT_START
-  let text = ''
-  for await (const chunk of stream) {
-    const result = splitChunk(split, chunk.text ?? '')
-    split = result.split
-    text += result.show
-  }
-  return text + finishSplit(split).show
+// One real tutor turn for whatever move the lesson state calls for. A refusal can also arrive in the
+// middle of the stream, so the whole turn is what gets retried.
+function tutor(state) {
+  return patiently(async () => {
+    const { stream, model } = await startTurn(apiKey, turnRequest(state, nextMove(state), Date.now()))
+    let split = SPLIT_START
+    let text = ''
+    for await (const chunk of stream) {
+      const result = splitChunk(split, chunk.text ?? '')
+      split = result.split
+      text += result.show
+    }
+    answeredBy[model] = (answeredBy[model] ?? 0) + 1
+    return text + finishSplit(split).show
+  })
 }
 
 // A yes/no question to the tutor model about a reply, for checks no rule can make.
@@ -158,17 +161,12 @@ function upperBound(failures, runs) {
 }
 
 const rows = []
-for (const [id, name, check, run, runs = RUNS] of scenarios) {
-  let passed = 0
-  for (let i = 0; i < runs; i++) if (await run()) passed++
-  const bound = Math.round(upperBound(runs - passed, runs) * 100)
-  rows.push(`| ${id} | ${name} | ${passed}/${runs} | ${check} | ${bound}% |`)
-  console.log(`${id}. ${passed}/${runs}  ${name}`)
-}
+// The results file is rewritten after every scenario, so a run that stops halfway keeps what it measured.
+function saveResults() {
+  const models = Object.entries(answeredBy).map(([model, count]) => `${model} ${count}`).join(', ')
+  const results = `# Scenario results
 
-const results = `# Scenario results
-
-Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Configured: plans ${PLAN_MODEL} (backup ${PLAN_BACKUP_MODEL}), tutor ${TUTOR_MODEL} (backup ${TUTOR_BACKUP_MODEL}). What actually answered: the cached plans were written by ${[...new Set([photo, injection, receipt].map((cached) => cached.model))].join(', ')}; tutor turns per model: ${Object.entries(answeredBy).map(([model, count]) => `${model} ${count}`).join(', ')}.
+Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Configured: plans ${PLAN_MODEL} (backup ${PLAN_BACKUP_MODEL}), tutor ${TUTOR_MODEL} (backup ${TUTOR_BACKUP_MODEL}). What actually answered: the cached plans were written by ${[...new Set([photo, injection, receipt].map((cached) => cached.model))].join(', ')}; tutor turns per model: ${models}.
 
 | # | Scenario | Passed | Checked by | Failure rate, 95% upper bound |
 |---|---|---|---|---|
@@ -176,5 +174,19 @@ ${rows.join('\n')}
 
 With n runs and 0 failures, the exact 95% upper bound on the failure rate is 1 − 0.05^(1/n), which is 45% for n = 5. A 5/5 says the behavior is common, not that it is guaranteed. Scenario 7 depends on one cached plan, so it is one run. The judge is the tutor model answering yes or no.
 `
-writeFileSync(new URL('../docs/scenario-results.md', import.meta.url), results)
+  writeFileSync(new URL('../docs/scenario-results.md', import.meta.url), results)
+}
+
+for (const [id, name, check, run, runs = RUNS] of scenarios) {
+  let passed = 0
+  for (let i = 0; i < runs; i++) {
+    const ok = await run()
+    if (ok) passed++
+    console.log(`  ${id}.${i + 1} ${ok ? 'pass' : 'FAIL'}`)
+  }
+  const bound = Math.round(upperBound(runs - passed, runs) * 100)
+  rows.push(`| ${id} | ${name} | ${passed}/${runs} | ${check} | ${bound}% |`)
+  console.log(`${id}. ${passed}/${runs}  ${name}`)
+  saveResults()
+}
 console.log('\nWrote docs/scenario-results.md')
