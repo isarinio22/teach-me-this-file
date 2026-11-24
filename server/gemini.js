@@ -118,17 +118,19 @@ function turnText(turn) {
   return lines.join('\n')
 }
 
-// Starts one tutor turn and returns the stream of its reply. If the tutor model is unavailable
-// before the reply starts, the one retry goes to the backup model.
+// Starts one tutor turn. Returns the stream of its reply and the model that is writing it. If the
+// tutor model is unavailable before the reply starts, the one retry goes to the backup model.
 export async function startTurn(apiKey, turn, signal) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = [{ role: 'user', parts: [{ text: turnText(turn) }] }]
   const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, abortSignal: signal }
   try {
-    return await ai.models.generateContentStream({ model: TUTOR_MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: TUTOR_THINKING } } })
+    const stream = await ai.models.generateContentStream({ model: TUTOR_MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: TUTOR_THINKING } } })
+    return { stream, model: TUTOR_MODEL }
   } catch (error) {
     if (!isUnavailable(error)) throw error
-    return ai.models.generateContentStream({ model: TUTOR_BACKUP_MODEL, contents, config })
+    const stream = await ai.models.generateContentStream({ model: TUTOR_BACKUP_MODEL, contents, config })
+    return { stream, model: TUTOR_BACKUP_MODEL }
   }
 }
 

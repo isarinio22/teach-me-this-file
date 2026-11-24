@@ -81,7 +81,7 @@ app.post('/api/turn', requireKey, express.json({ limit: '200kb' }), async (req, 
   res.on('close', () => abort.abort()) // Stop in the browser closes the connection, which stops the model
   openEventStream(res)
   try {
-    const reply = await startTurn(res.locals.apiKey, parsed.data, abort.signal)
+    const { stream: reply } = await startTurn(res.locals.apiKey, parsed.data, abort.signal)
     let split = SPLIT_START
     for await (const chunk of reply) {
       const result = splitChunk(split, chunk.text ?? '')
