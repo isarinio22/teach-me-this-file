@@ -13,6 +13,17 @@ const apiKey = process.env.GEMINI_API_KEY
 const RUNS = 5
 const answeredBy = {} // model name: number of tutor turns it wrote
 const fixture = (name) => readFileSync(new URL(`../test-files/synthetic/${name}`, import.meta.url))
+// Scenarios measure behavior, not Google's availability: a busy or rate-limited call waits and tries again.
+async function patiently(call) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await call()
+    } catch (error) {
+      if (attempt === 6 || !(error instanceof ApiError) || ![429, 500, 503].includes(error.status)) throw error
+      await new Promise((resolve) => setTimeout(resolve, 15000))
+    }
+  }
+}
 const words = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
 
 // Each fixture is turned into a plan once and kept in scenarios/.cache/, so re-runs cost only the tutor turns.
@@ -23,13 +34,14 @@ async function lessonPlan(name) {
   const { mimeType } = checkFile({ originalname: name, buffer })
   const result = await generatePlan(apiKey, { mimeType, buffer }, 'Teach this to 7th graders.', { onModel: () => {} })
   mkdirSync(new URL('.cache/', import.meta.url), { recursive: true })
-  writeFileSync(cached, JSON.stringify(result, null, 2))
-  return result
+  const saved = { ...result, model: result.usedBackupModel ? PLAN_BACKUP_MODEL : PLAN_MODEL }
+  writeFileSync(cached, JSON.stringify(saved, null, 2))
+  return saved
 }
 
 // One real tutor turn for whatever move the lesson state calls for.
 async function tutor(state) {
-  const { stream, model } = await startTurn(apiKey, turnRequest(state, nextMove(state), Date.now()))
+  const { stream, model } = await patiently(() => startTurn(apiKey, turnRequest(state, nextMove(state), Date.now())))
   answeredBy[model] = (answeredBy[model] ?? 0) + 1
   let split = SPLIT_START
   let text = ''
@@ -46,14 +58,14 @@ async function judge(question, reply) {
   const ai = new GoogleGenAI({ apiKey })
   const schema = { type: 'object', properties: { answer: { type: 'string', enum: ['yes', 'no'] } }, required: ['answer'] }
   const request = { contents: `${question}\n\nTHE TUTOR'S REPLY:\n${reply}`, config: { responseMimeType: 'application/json', responseJsonSchema: schema } }
-  for (const model of [TUTOR_MODEL, TUTOR_BACKUP_MODEL]) {
+  return patiently(async () => {
     try {
-      return JSON.parse((await ai.models.generateContent({ model, ...request })).text).answer === 'yes'
+      return JSON.parse((await ai.models.generateContent({ model: TUTOR_MODEL, ...request })).text).answer === 'yes'
     } catch (error) {
       if (!(error instanceof ApiError) || ![429, 500, 503].includes(error.status)) throw error
+      return JSON.parse((await ai.models.generateContent({ model: TUTOR_BACKUP_MODEL, ...request })).text).answer === 'yes'
     }
-  }
-  throw new Error('No judge model is available right now.')
+  })
 }
 
 // A lesson brought to the moment a scenario needs. Tutor lines whose wording does not matter are placeholders.
@@ -156,7 +168,7 @@ for (const [id, name, check, run, runs = RUNS] of scenarios) {
 
 const results = `# Scenario results
 
-Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Plans: ${PLAN_MODEL}, backup ${PLAN_BACKUP_MODEL}${photo.usedBackupModel ? ' (the backup wrote the cached plans)' : ''}. Tutor turns: ${TUTOR_MODEL}, backup ${TUTOR_BACKUP_MODEL}. Turns written per model: ${Object.entries(answeredBy).map(([model, count]) => `${model} ${count}`).join(', ')}.
+Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Configured: plans ${PLAN_MODEL} (backup ${PLAN_BACKUP_MODEL}), tutor ${TUTOR_MODEL} (backup ${TUTOR_BACKUP_MODEL}). What actually answered: the cached plans were written by ${[...new Set([photo, injection, receipt].map((cached) => cached.model))].join(', ')}; tutor turns per model: ${Object.entries(answeredBy).map(([model, count]) => `${model} ${count}`).join(', ')}.
 
 | # | Scenario | Passed | Checked by | Failure rate, 95% upper bound |
 |---|---|---|---|---|
