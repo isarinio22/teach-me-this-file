@@ -12,7 +12,8 @@
     "build": "npm run build -w client",
     "start": "npm start -w server",
     "test": "vitest run",
-    "fixtures": "node scripts/make-fixtures.js"
+    "fixtures": "node scripts/make-fixtures.js",
+    "scenarios": "node scenarios/run.js"
   },
   "devDependencies": {
     "concurrently": "^10.0.7",
