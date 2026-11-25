@@ -2,7 +2,10 @@ import { beforeEach, expect, test, vi } from 'vitest'
 
 // The real SDK is replaced by a script: every call to the model takes the next scripted
 // reply. A reply is either the text the model returns or an error it throws.
-const script = vi.hoisted(() => ({ replies: [], modelsCalled: [] }))
+const script = vi.hoisted(() => {
+  process.env.PLAN_DEADLINE_SECONDS = '0.05' // a 50 ms deadline, so the slow-model test is fast
+  return { replies: [], modelsCalled: [] }
+})
 
 vi.mock('@google/genai', () => {
   class ApiError extends Error {
@@ -18,6 +21,10 @@ vi.mock('@google/genai', () => {
           script.modelsCalled.push(request.model)
           const reply = script.replies.shift()
           if (reply instanceof Error) throw reply
+          if (reply === 'too slow') {
+            const signal = request.config.abortSignal
+            return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)))
+          }
           return { text: reply }
         },
       },
@@ -86,7 +93,22 @@ test('asks for one repair when a question has two correct options', async () => 
   script.replies = [JSON.stringify(broken), JSON.stringify(validPlan())]
   const result = await build()
   expect(result.plan.steps[2].main.options.filter((option) => option.correct)).toHaveLength(1)
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_MODEL])
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+})
+
+test('hands the plan to the backup model when the plan model misses its deadline', async () => {
+  script.replies = ['too slow', JSON.stringify(validPlan())]
+  const result = await build()
+  expect(result.usedBackupModel).toBe(true)
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+})
+
+test('stops without the backup when the teacher cancels', async () => {
+  script.replies = ['too slow', JSON.stringify(validPlan())]
+  const cancel = new AbortController()
+  setTimeout(() => cancel.abort(), 10)
+  await expect(generatePlan('test-key', file, '', { signal: cancel.signal, onModel: () => {} })).rejects.toThrow()
+  expect(script.modelsCalled).toEqual([PLAN_MODEL])
 })
 
 test('gives up after one failed repair', async () => {

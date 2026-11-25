@@ -6,8 +6,17 @@
 // strongest model a free key can call, so every model the app uses can be tested on a free key.
 export const PLAN_MODEL = process.env.PLAN_MODEL || 'gemini-4-hydrogen'
 
-// Takes over for the one retry when PLAN_MODEL is busy, rate limited, or not open to this key.
-export const PLAN_BACKUP_MODEL = process.env.PLAN_BACKUP_MODEL || 'gemini-3.8-flash'
+// Thinks little: on its default level a short PDF took two to five minutes.
+export const PLAN_THINKING = 'LOW'
+
+// How long PLAN_MODEL gets before the backup takes over. Cloud Run ends every request at 300
+// seconds, so the backup still has time to finish inside that limit.
+export const PLAN_DEADLINE_SECONDS = Number(process.env.PLAN_DEADLINE_SECONDS) || 120
+
+// Takes over when PLAN_MODEL is busy, rate limited, too slow, or not open to this key, and writes
+// the one repair. Flash-Lite answers fast, and on a free key it kept answering when the others were
+// busy or over their limit of 20 requests a day.
+export const PLAN_BACKUP_MODEL = process.env.PLAN_BACKUP_MODEL || 'gemini-3.5-flash-lite'
 
 // Speaks on every turn of the lesson, where waiting feels bad: the strongest Flash model, thinking little.
 export const TUTOR_MODEL = process.env.TUTOR_MODEL || 'gemini-3.8-flash'

@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODEL, PLAN_MODEL, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
+import { PLAN_BACKUP_MODEL, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_THINKING, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -28,7 +28,7 @@ export async function countPlanTokens(apiKey, file, teacherPrompt, signal) {
 }
 
 // One attempt: ask, parse, validate. Returns { plan }, or { raw, problems } when the reply breaks the rules.
-async function askForPlan(ai, model, contents, signal) {
+async function askForPlan(ai, model, contents, signal, thinking) {
   const response = await ai.models.generateContent({
     model,
     contents,
@@ -37,6 +37,7 @@ async function askForPlan(ai, model, contents, signal) {
       responseMimeType: 'application/json',
       responseJsonSchema: lessonPlanJsonSchema,
       abortSignal: signal,
+      ...(thinking && { thinkingConfig: { thinkingLevel: thinking } }),
     },
   })
   const raw = response.text ?? ''
@@ -56,8 +57,8 @@ function isUnavailable(error) {
   return error instanceof ApiError && [429, 500, 503].includes(error.status)
 }
 
-// Builds the lesson plan. At most three calls: the plan model, the backup model if the
-// first is unavailable, and one repair if the plan breaks the rules.
+// Builds the lesson plan. At most three calls: the plan model; the backup model if the first is
+// unavailable or misses its deadline; and one repair, by the backup, if the plan breaks the rules.
 // onModel is called with the model name each time a model starts working.
 export async function generatePlan(apiKey, file, teacherPrompt, { signal, onModel }) {
   const ai = new GoogleGenAI({ apiKey })
@@ -66,19 +67,22 @@ export async function generatePlan(apiKey, file, teacherPrompt, { signal, onMode
   let model = PLAN_MODEL
   let attempt
   onModel(model)
+  const deadline = AbortSignal.timeout(PLAN_DEADLINE_SECONDS * 1000)
   try {
-    attempt = await askForPlan(ai, model, contents, signal)
+    attempt = await askForPlan(ai, model, contents, AbortSignal.any(signal ? [deadline, signal] : [deadline]), PLAN_THINKING)
   } catch (error) {
-    if (!isUnavailable(error)) throw error
+    // The teacher pressing Cancel stops everything; a slow or unavailable model hands over.
+    if (signal?.aborted || !(deadline.aborted || isUnavailable(error))) throw error
     model = PLAN_BACKUP_MODEL
     onModel(model)
     attempt = await askForPlan(ai, model, contents, signal)
   }
 
   if (!attempt.plan) {
-    // The repair retry shows the model its own reply and the rules it broke.
+    // The repair shows the fast backup model the reply and the rules it broke.
     const complaint = `That plan breaks these rules:\n- ${attempt.problems.join('\n- ')}\nReturn the complete corrected plan.`
     const repair = [...contents, { role: 'model', parts: [{ text: attempt.raw }] }, { role: 'user', parts: [{ text: complaint }] }]
+    model = PLAN_BACKUP_MODEL
     attempt = await askForPlan(ai, model, repair, signal)
   }
   if (!attempt.plan) {
