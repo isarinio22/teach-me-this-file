@@ -68,7 +68,7 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
         sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt, tries: PLAN_BACKUP_TRIES })
       }
       const result = await generatePlan(apiKey, file, teacherPrompt, { signal, onModel })
-      sendEvent(res, 'ready', result)
+      sendEvent(res, 'ready', { plan: result.plan, usedBackupModel: result.usedBackupModel }) // the screen needs no model names
     }
   } catch (error) {
     if (!abort.signal.aborted) {
