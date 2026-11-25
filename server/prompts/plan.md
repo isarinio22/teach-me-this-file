@@ -17,7 +17,7 @@ Otherwise set `teachable` to true and `reason` to an empty string.
 
 ## Language and length
 
-- `language`: the language the teacher asks for. If the teacher names none, the language of the file.
+- `language`: the language the teacher asks for. An accent, a dialect or a voice that belongs to one language asks for that language: "with a southern accent" means English. If the teacher asks for no language, by name or this way, the language of the file.
 - Write everything the student or teacher will read in that language: title, step titles, objectives, questions, options, explanations and misconceptions. Passages stay in the file's own language, because they are quotations.
 - `minutes`: the length the teacher asks for. If the teacher names none, 15.
 - Number of steps: 4 for up to 8 minutes, 5 or 6 for up to 20 minutes, 7 or 8 for longer. Never fewer than 4 or more than 8.

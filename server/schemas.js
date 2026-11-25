@@ -33,8 +33,9 @@ const passage = z.object({
 const planShape = z.object({
   teachable: z.boolean(),
   reason: z.string().describe('When teachable is false: why, in one sentence, in English. Otherwise empty.'),
+  // Before the title: the model writes fields in this order, so it settles the language before writing in one.
+  language: z.string().describe('The language of the lesson, as an English word such as French or Hebrew, chosen by the language rules.'),
   title: z.string(),
-  language: z.string().describe('The language of the lesson, as an English word such as French or Hebrew.'),
   minutes: z.number().int().min(1).max(120).describe('The time budget in minutes.'),
   passages: z.array(passage),
   steps: z.array(step),

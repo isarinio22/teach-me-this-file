@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODELS, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODELS, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
+import { PLAN_BACKUP_MODELS, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODELS, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_START_SECONDS, TUTOR_THINKING } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -137,20 +137,34 @@ function turnText(turn) {
   return lines.join('\n')
 }
 
-// Starts one tutor turn. Returns the stream of its reply and the model that is writing it. While a
-// model is unavailable before the reply starts, the next backup model is asked, once each.
+// Starts one tutor turn. Returns the stream of its reply and the model that is writing it. Each model
+// gets TUTOR_START_SECONDS to start replying; one that is unavailable or silent hands over to the next.
 export async function startTurn(apiKey, turn, signal) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = [{ role: 'user', parts: [{ text: turnText(turn) }] }]
-  const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, thinkingConfig: { thinkingLevel: TUTOR_THINKING }, abortSignal: signal }
   const models = [TUTOR_MODEL, ...TUTOR_BACKUP_MODELS]
   for (const model of models) {
+    const silent = new AbortController()
+    const timer = setTimeout(() => silent.abort(), TUTOR_START_SECONDS * 1000)
+    const abortSignal = AbortSignal.any(signal ? [signal, silent.signal] : [silent.signal])
+    const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, thinkingConfig: { thinkingLevel: TUTOR_THINKING }, abortSignal }
     try {
-      return { stream: await ai.models.generateContentStream({ model, contents, config }), model }
+      const stream = await ai.models.generateContentStream({ model, contents, config })
+      const first = await stream.next() // the deadline is for this: the first words of the reply
+      return { stream: withFirst(first, stream), model }
     } catch (error) {
-      if (signal?.aborted || !isUnavailable(error) || model === models.at(-1)) throw error
+      if (signal?.aborted || !(silent.signal.aborted || isUnavailable(error))) throw error
+      if (model === models.at(-1)) throw silent.signal.aborted ? Object.assign(new Error('too_slow'), { code: 'too_slow' }) : error
+    } finally {
+      clearTimeout(timer) // once the reply has started, the deadline no longer applies
     }
   }
+}
+
+// The reply's stream, with its first chunk, which startTurn has already read, put back in front.
+async function* withFirst(first, rest) {
+  if (!first.done) yield first.value
+  yield* rest
 }
 
 // Google answers a rate limit with a suggested wait such as "37s" inside the error body.
@@ -167,6 +181,9 @@ function retryAfterSeconds(error) {
 // Turns any failure into { code, message, retryAfterSeconds? }: what happened and what to do next.
 // refusedMessage is for any other request Google turns down, which depends on what was asked.
 export function describeError(error, refusedMessage) {
+  if (error.code === 'too_slow') {
+    return { code: 'model_busy', message: 'Google’s models are too slow right now. Try again in a minute.' }
+  }
   if (error.code === 'plan_invalid') {
     return { code: 'plan_invalid', message: 'The model could not make a usable lesson plan from this file. Try again, or use a clearer copy of the file.' }
   }

@@ -5,6 +5,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const script = vi.hoisted(() => {
   process.env.PLAN_DEADLINE_SECONDS = '0.05' // a 50 ms deadline and 10 ms waits, so the tests are fast
   process.env.PLAN_RETRY_WAIT_SECONDS = '0.01'
+  process.env.TUTOR_START_SECONDS = '0.05'
   return { replies: [], modelsCalled: [] }
 })
 
@@ -29,7 +30,8 @@ vi.mock('@google/genai', () => {
           return { text: reply }
         },
         async generateContentStream(request) {
-          return this.generateContent(request)
+          const reply = await this.generateContent(request)
+          return (async function* () { yield reply })()
         },
       },
     }
@@ -149,12 +151,33 @@ test('does not retry when the key is rejected', async () => {
   expect(script.modelsCalled).toHaveLength(1)
 })
 
+const openingTurn = { move: 'open', lessonTitle: 'Photosynthesis', language: 'English', teacherPrompt: '', background: '', elapsedMinutes: 0, budgetMinutes: 15, history: [] }
+
+async function words(stream) {
+  const chunks = []
+  for await (const chunk of stream) chunks.push(chunk.text)
+  return chunks.join('')
+}
+
 test('a tutor turn goes to the next model while each one is busy', async () => {
   script.replies = [busy(), busy(), 'Hello.']
-  const turn = { move: 'open', lessonTitle: 'Photosynthesis', language: 'English', teacherPrompt: '', background: '', elapsedMinutes: 0, budgetMinutes: 15, history: [] }
-  const { model } = await startTurn('test-key', turn)
+  const { stream, model } = await startTurn('test-key', openingTurn)
   expect(model).toBe(TUTOR_BACKUP_MODELS[1])
+  expect(await words(stream)).toBe('Hello.')
   expect(script.modelsCalled).toEqual([TUTOR_MODEL, ...TUTOR_BACKUP_MODELS])
+})
+
+test('a tutor model that does not start its reply in time hands over to the next', async () => {
+  script.replies = ['too slow', 'Hello.']
+  const { stream, model } = await startTurn('test-key', openingTurn)
+  expect(model).toBe(TUTOR_BACKUP_MODELS[0])
+  expect(await words(stream)).toBe('Hello.')
+})
+
+test('a turn whose models all stay silent ends with a clear message', async () => {
+  script.replies = ['too slow', 'too slow', 'too slow']
+  const error = await startTurn('test-key', openingTurn).catch((caught) => caught)
+  expect(describeError(error)).toMatchObject({ code: 'model_busy', message: expect.stringContaining('too slow') })
 })
 
 test('accepts a plan that says the file cannot be taught', () => {

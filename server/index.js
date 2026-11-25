@@ -73,8 +73,8 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
   } catch (error) {
     if (!abort.signal.aborted) {
       console.error('Plan failed:', error.status ?? error.code ?? error.name)
-      const tooSlow = { code: 'model_busy', message: 'Google’s models are too slow right now. Try again in a few minutes.' }
-      sendEvent(res, 'error', timeUp.aborted ? tooSlow : describeError(error, 'Google could not read this file. Export it again, or try another file.'))
+      const failure = timeUp.aborted ? { code: 'too_slow' } : error
+      sendEvent(res, 'error', describeError(failure, 'Google could not read this file. Export it again, or try another file.'))
     }
   }
   clearInterval(keepAlive)
@@ -106,7 +106,10 @@ app.post('/api/turn', requireKey, express.json({ limit: '200kb' }), async (req, 
     else console.error(`Tutor turn without valid JSON (move: ${parsed.data.move})`)
     sendEvent(res, 'done', {})
   } catch (error) {
-    if (!abort.signal.aborted) sendEvent(res, 'error', describeError(error, 'Google refused this turn. Try again.'))
+    if (!abort.signal.aborted) {
+      console.error(`Turn (${parsed.data.move}) failed:`, error.status ?? error.code ?? error.name)
+      sendEvent(res, 'error', describeError(error, 'Google refused this turn. Try again.'))
+    }
   }
   res.end()
 })
