@@ -8,7 +8,7 @@ The teaching method is in [docs/PEDAGOGY.md](docs/PEDAGOGY.md), and the design i
 
 ## Using it
 
-1. Press **Add API key** and paste a [Gemini API key](https://aistudio.google.com/apikey). It stays in the page's memory and is sent with each request; it is never stored or logged.
+1. The first time you press **Build lesson**, the app asks for a [Gemini API key](https://aistudio.google.com/apikey). It stays in the page's memory and is sent with each request; it is never stored or logged. **Change key** in the header replaces it.
 2. Choose a file: PDF, PNG, JPEG, WEBP, TXT or MD, up to 14 MB. Scans and photos work, because the model reads the pages.
 3. Optionally, say how to teach it, for example "Teach this to 7th graders, in French. Be Socratic. Keep it under 15 minutes." Left empty, the lesson uses the file's language and takes about 15 minutes.
 4. Press **Build lesson**. The screen counts the seconds while the plan is written, then the lesson opens for the student. A file that can't be taught stays here, with the reason.

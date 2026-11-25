@@ -93,9 +93,12 @@ export default function App() {
       <header className="mx-auto max-w-sheet px-4 pt-4">
         <div className="flex min-h-14 items-center justify-between gap-4 rounded-pill bg-sage py-1.5 ps-6 pe-1.5">
           <p className="font-bold whitespace-nowrap">Teach me this file</p>
-          <Button variant="secondary" className="whitespace-nowrap" onClick={() => setSettingsOpen(true)}>
-            {apiKey ? 'Change key' : 'Add API key'}
-          </Button>
+          {/* The key is asked for when the first lesson is built; after that, it can be changed here. */}
+          {apiKey && (
+            <Button variant="secondary" className="whitespace-nowrap" onClick={() => setSettingsOpen(true)}>
+              Change key
+            </Button>
+          )}
         </div>
         {server === 'slow' && <p role="status" className="mt-3 text-small text-graphite">Starting the server. After a quiet period this takes a few seconds.</p>}
         {server === 'down' && <div className="mt-3"><Alert tone="error">The server is not answering. Check your internet connection, then reload the page.</Alert></div>}

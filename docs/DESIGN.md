@@ -67,7 +67,7 @@ The lesson path uses the same pen: a tick (right first time), a tick with one do
 ```
 SETUP (phone)
 ╭──────────────────────────────╮
-│ Teach me this file [API key] │
+│ Teach me this file           │
 ╰──────────────────────────────╯
   Turn a file into a lesson
 ╭───────────────────── ✎ ──────╮
