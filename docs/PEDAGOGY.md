@@ -16,7 +16,7 @@ I taught psychometric exam prep and managed a team of teachers. This app teaches
 7. **The student does the thinking.** Tutor turns are short and always end with something for the student to do.
 8. **End with retrieval.** The weakest steps come back as up to 2 review questions before the lesson ends.
 9. **Stay inside the material.** If the file doesn't cover something, the tutor says so and returns to the lesson.
-10. **The teacher stays in charge.** The teacher's prompt sets the language, level, tone and length. The teacher can remove steps before the lesson starts. The method itself stays the same.
+10. **The teacher stays in charge.** The teacher's prompt sets the language, level, tone and length. The method itself stays the same.
 
 ## Details a test writer cares about
 

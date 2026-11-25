@@ -62,22 +62,24 @@ The lesson path uses the same pen: a tick (right first time), a tick with one do
 
 ## Screens
 
+"Build lesson" opens the lesson directly. Until 25 November a Plan screen for the teacher sat in between; on a phone it read like a test to answer, so it went.
+
 ```
-SETUP (phone)                     PLAN
-╭──────────────────────────────╮  ╭──────────────────────────────╮
-│ Teach me this file [API key] │  │ Photosynthesis               │
-╰──────────────────────────────╯  │ 6 steps. About 15 minutes.   │
-  Turn a file into a lesson       ├──────────────────────────────┤
-╭───────────────────── ✎ ──────╮  │ 1 Where the mass comes from  │
-│ 1. The file                  │  │   Objective: explain that …  │
-│ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┐ │  │   Check: "A tree gains …"    │
-│ │ (Choose a file)          │ │  │                [Remove step] │
-│ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘ │  ├──────────────────────────────┤
-│ 2. How to teach it           │  │ 2 Two stages                 │
-│ ┌──────────────────────────┐ │  │   …                          │
-│ └──────────────────────────┘ │  ├──────────────────────────────┤
-│ (       Build lesson       ) │  │ (       Start lesson       ) │
-╰──────────────────────────────╯  ╰──────────────────────────────╯
+SETUP (phone)
+╭──────────────────────────────╮
+│ Teach me this file [API key] │
+╰──────────────────────────────╯
+  Turn a file into a lesson
+╭───────────────────── ✎ ──────╮
+│ 1. The file                  │
+│ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┐ │
+│ │ (Choose a file)          │ │
+│ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘ │
+│ 2. How to teach it           │
+│ ┌──────────────────────────┐ │
+│ └──────────────────────────┘ │
+│ (       Build lesson       ) │
+╰──────────────────────────────╯
   ☺ How the lesson goes
 
 LESSON (desktop: sheet + margin)              REPORT
