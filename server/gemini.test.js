@@ -28,6 +28,9 @@ vi.mock('@google/genai', () => {
           }
           return { text: reply }
         },
+        async generateContentStream(request) {
+          return this.generateContent(request)
+        },
       },
     }
   }
@@ -35,8 +38,9 @@ vi.mock('@google/genai', () => {
 })
 
 const { ApiError } = await import('@google/genai')
-const { PLAN_BACKUP_MODEL, PLAN_MODEL } = await import('./config.js')
-const { describeError, generatePlan } = await import('./gemini.js')
+const { PLAN_BACKUP_MODELS, PLAN_MODEL, TUTOR_BACKUP_MODELS, TUTOR_MODEL } = await import('./config.js')
+const { describeError, generatePlan, startTurn } = await import('./gemini.js')
+const [FIRST_BACKUP, SECOND_BACKUP] = PLAN_BACKUP_MODELS
 const { lessonPlanSchema } = await import('./schemas.js')
 
 function question(correctIndex = 1) {
@@ -81,25 +85,31 @@ test('returns the plan when the first reply follows the rules', async () => {
   expect(script.modelsCalled).toEqual([PLAN_MODEL])
 })
 
-test('switches to the backup model when the plan model is busy', async () => {
+test('switches to the first backup model when the plan model is busy', async () => {
   script.replies = [busy(), JSON.stringify(validPlan())]
   const result = await build()
-  expect(result.usedBackupModel).toBe(true)
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+  expect(result).toMatchObject({ model: FIRST_BACKUP, usedBackupModel: true })
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, FIRST_BACKUP])
 })
 
-test('tries the backup model again when it is busy', async () => {
+test('asks the second backup model at once when the first is busy', async () => {
   script.replies = [busy(), busy(), JSON.stringify(validPlan())]
   const result = await build()
-  expect(result.usedBackupModel).toBe(true)
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL])
+  expect(result).toMatchObject({ model: SECOND_BACKUP, usedBackupModel: true })
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, FIRST_BACKUP, SECOND_BACKUP])
 })
 
-test('stops after five busy answers from the backup model', async () => {
-  script.replies = Array.from({ length: 6 }, busy)
+test('moves to the next backup when a model is not open to this key', async () => {
+  script.replies = [new ApiError({ status: 404, message: '{"error":{"code":404,"status":"NOT_FOUND"}}' }), JSON.stringify(validPlan())]
+  const result = await build()
+  expect(result.model).toBe(FIRST_BACKUP)
+})
+
+test('stops after six busy answers, taking turns between the backup models', async () => {
+  script.replies = Array.from({ length: 7 }, busy)
   const error = await build().catch((caught) => caught)
   expect(describeError(error, '').code).toBe('model_busy')
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, ...Array(5).fill(PLAN_BACKUP_MODEL)])
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, ...Array(3).fill(PLAN_BACKUP_MODELS).flat()])
 })
 
 test('asks for one repair when a question has two correct options', async () => {
@@ -108,14 +118,14 @@ test('asks for one repair when a question has two correct options', async () => 
   script.replies = [JSON.stringify(broken), JSON.stringify(validPlan())]
   const result = await build()
   expect(result.plan.steps[2].main.options.filter((option) => option.correct)).toHaveLength(1)
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, FIRST_BACKUP])
 })
 
 test('hands the plan to the backup model when the plan model misses its deadline', async () => {
   script.replies = ['too slow', JSON.stringify(validPlan())]
   const result = await build()
   expect(result.usedBackupModel).toBe(true)
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, FIRST_BACKUP])
 })
 
 test('stops without the backup when the teacher cancels', async () => {
@@ -137,6 +147,14 @@ test('does not retry when the key is rejected', async () => {
   const error = await build().catch((caught) => caught)
   expect(describeError(error).code).toBe('invalid_key')
   expect(script.modelsCalled).toHaveLength(1)
+})
+
+test('a tutor turn goes to the next model while each one is busy', async () => {
+  script.replies = [busy(), busy(), 'Hello.']
+  const turn = { move: 'open', lessonTitle: 'Photosynthesis', language: 'English', teacherPrompt: '', background: '', elapsedMinutes: 0, budgetMinutes: 15, history: [] }
+  const { model } = await startTurn('test-key', turn)
+  expect(model).toBe(TUTOR_BACKUP_MODELS[1])
+  expect(script.modelsCalled).toEqual([TUTOR_MODEL, ...TUTOR_BACKUP_MODELS])
 })
 
 test('accepts a plan that says the file cannot be taught', () => {

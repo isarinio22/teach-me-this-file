@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
 import { currentItem, lessonReducer, nextMove, turnRequest } from '../client/src/lesson.js'
-import { PLAN_BACKUP_MODEL, PLAN_MODEL, TUTOR_BACKUP_MODEL, TUTOR_MODEL } from '../server/config.js'
+import { PLAN_BACKUP_MODELS, PLAN_MODEL, TUTOR_BACKUP_MODELS, TUTOR_MODEL } from '../server/config.js'
 import { checkFile } from '../server/files.js'
 import { generatePlan, startTurn } from '../server/gemini.js'
 import { finishSplit, SPLIT_START, splitChunk } from '../server/stream.js'
@@ -34,9 +34,8 @@ async function lessonPlan(name) {
   const { mimeType } = checkFile({ originalname: name, buffer })
   const result = await generatePlan(apiKey, { mimeType, buffer }, 'Teach this to 7th graders.', { onModel: () => {} })
   mkdirSync(new URL('.cache/', import.meta.url), { recursive: true })
-  const saved = { ...result, model: result.usedBackupModel ? PLAN_BACKUP_MODEL : PLAN_MODEL }
-  writeFileSync(cached, JSON.stringify(saved, null, 2))
-  return saved
+  writeFileSync(cached, JSON.stringify(result, null, 2))
+  return result
 }
 
 // One real tutor turn for whatever move the lesson state calls for. A refusal can also arrive in the
@@ -66,7 +65,7 @@ async function judge(question, reply) {
       return JSON.parse((await ai.models.generateContent({ model: TUTOR_MODEL, ...request })).text).answer === 'yes'
     } catch (error) {
       if (!(error instanceof ApiError) || ![429, 500, 503].includes(error.status)) throw error
-      return JSON.parse((await ai.models.generateContent({ model: TUTOR_BACKUP_MODEL, ...request })).text).answer === 'yes'
+      return JSON.parse((await ai.models.generateContent({ model: TUTOR_BACKUP_MODELS[0], ...request })).text).answer === 'yes'
     }
   })
 }
@@ -166,7 +165,7 @@ function saveResults() {
   const models = Object.entries(answeredBy).map(([model, count]) => `${model} ${count}`).join(', ')
   const results = `# Scenario results
 
-Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Configured: plans ${PLAN_MODEL} (backup ${PLAN_BACKUP_MODEL}), tutor ${TUTOR_MODEL} (backup ${TUTOR_BACKUP_MODEL}). What actually answered: the cached plans were written by ${[...new Set([photo, injection, receipt].map((cached) => cached.model))].join(', ')}; tutor turns per model: ${models}.
+Run on ${new Date().toISOString().slice(0, 10)} with \`npm run scenarios\`. Configured: plans ${PLAN_MODEL} (backups ${PLAN_BACKUP_MODELS.join(', ')}), tutor ${TUTOR_MODEL} (backups ${TUTOR_BACKUP_MODELS.join(', ')}). What actually answered: the cached plans were written by ${[...new Set([photo, injection, receipt].map((cached) => cached.model))].join(', ')}; tutor turns per model: ${models}.
 
 | # | Scenario | Passed | Checked by | Failure rate, 95% upper bound |
 |---|---|---|---|---|

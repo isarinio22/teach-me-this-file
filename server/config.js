@@ -6,31 +6,38 @@
 // strongest model a free key can call, so every model the app uses can be tested on a free key.
 export const PLAN_MODEL = process.env.PLAN_MODEL || 'gemini-4-hydrogen'
 
-// Thinks little: on its default level a short PDF took two to five minutes.
+// Every plan model thinks little. At its default level Hydrogen took two to five minutes on a short
+// PDF, and Gemini 3.5 Flash took 38 seconds where it took 24 at the low level.
 export const PLAN_THINKING = 'LOW'
 
 // How long PLAN_MODEL gets before the backup takes over. At low thinking it planned a 92-page PDF in
 // 35 seconds; on a free key it can also accept a request and then stall, so it is not waited for long.
 export const PLAN_DEADLINE_SECONDS = Number(process.env.PLAN_DEADLINE_SECONDS) || 50
 
-// The backup's tries when Google answers "busy", and the wait before the second try (then twice,
-// three times, four times as long). Measured on a free key: a plan request was refused three times
-// and accepted on the fourth, about 45 seconds later. With the deadline above, the worst case is
-// about 150 seconds, inside Cloud Run's 300-second limit on a request.
-export const PLAN_BACKUP_TRIES = 5
+// Take turns when PLAN_MODEL is busy, rate limited, too slow, or not open to this key, and write the
+// one repair. Two models, because on a free key one is often busy while another answers: on
+// 25 November both Flash-Lite models answered "busy" while Gemini 3.5 Flash wrote a plan. Flash-Lite
+// goes first because, when it is free, it writes a plan in about ten seconds. To change them, set
+// PLAN_BACKUP_MODELS to a comma-separated list.
+export const PLAN_BACKUP_MODELS = (process.env.PLAN_BACKUP_MODELS || 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',')
+
+// Tries across the backups. A busy backup hands over to the next one at once; after each full round
+// the app waits, 5 seconds after the first round and 10 after the second.
+export const PLAN_BACKUP_TRIES = 6
 export const PLAN_RETRY_WAIT_SECONDS = Number(process.env.PLAN_RETRY_WAIT_SECONDS) || 5
 
-// Takes over when PLAN_MODEL is busy, rate limited, too slow, or not open to this key, and writes
-// the one repair. Flash-Lite answers fast, and on a free key it kept answering when the others were
-// busy or over their limit of 20 requests a day.
-export const PLAN_BACKUP_MODEL = process.env.PLAN_BACKUP_MODEL || 'gemini-3.5-flash-lite'
+// A build that is still waiting for Google after this long stops with a clear message, before
+// Cloud Run cuts the connection at 300 seconds.
+export const PLAN_TOTAL_SECONDS = 240
 
-// Speaks on every turn of the lesson, where waiting feels bad: the strongest Flash model, thinking little.
+// Speaks on every turn of the lesson, where waiting feels bad: the strongest Flash model.
 export const TUTOR_MODEL = process.env.TUTOR_MODEL || 'gemini-3.8-flash'
-export const TUTOR_THINKING = 'LOW'
 
-// Takes over for the one retry when TUTOR_MODEL is busy before the reply starts.
-export const TUTOR_BACKUP_MODEL = process.env.TUTOR_BACKUP_MODEL || 'gemini-3.5-flash-lite'
+// Take over, in this order, when the model before them is busy before the reply starts.
+export const TUTOR_BACKUP_MODELS = (process.env.TUTOR_BACKUP_MODELS || 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',')
+
+// Every tutor model thinks little, for speed.
+export const TUTOR_THINKING = 'LOW'
 
 // The longest tutor turn, in tokens. A turn is meant to be under 150 words; this is a cost ceiling.
 export const TUTOR_MAX_TOKENS = 700

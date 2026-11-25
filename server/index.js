@@ -2,7 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MAX_FILE_BYTES, PLAN_BACKUP_TRIES, PLAN_MODEL, TOKEN_BUDGET } from './config.js'
+import { MAX_FILE_BYTES, PLAN_BACKUP_TRIES, PLAN_MODEL, PLAN_TOTAL_SECONDS, TOKEN_BUDGET } from './config.js'
 import { checkFile } from './files.js'
 import { countPlanTokens, describeError, generatePlan, startTurn } from './gemini.js'
 import { turnRequestSchema } from './schemas.js'
@@ -43,9 +43,12 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
   const teacherPrompt = String(req.body.prompt ?? '').slice(0, 2000)
   const { apiKey } = res.locals
 
-  // If the browser goes away (Cancel, a closed tab), the model call is stopped too.
+  // If the browser goes away (Cancel, a closed tab), the model call is stopped too. So is a build
+  // that runs out of time: a clear message is better than Cloud Run cutting the connection.
   const abort = new AbortController()
   res.on('close', () => abort.abort())
+  const timeUp = AbortSignal.timeout(PLAN_TOTAL_SECONDS * 1000)
+  const signal = AbortSignal.any([abort.signal, timeUp])
 
   openEventStream(res)
   sendEvent(res, 'received', { bytes: req.file.size })
@@ -53,18 +56,26 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
   const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), 15_000)
   try {
     sendEvent(res, 'reading', {})
-    const tokens = await countPlanTokens(apiKey, file, teacherPrompt, abort.signal)
+    const tokens = await countPlanTokens(apiKey, file, teacherPrompt, signal)
     if (tokens > TOKEN_BUDGET) {
       const size = `about ${tokens.toLocaleString('en-US')} tokens, and the limit is ${TOKEN_BUDGET.toLocaleString('en-US')}`
       const message = `This file is too long for one lesson: ${size} (roughly 180 PDF pages). Upload only the chapter you want to teach.`
       sendEvent(res, 'error', { code: 'over_token_budget', message })
     } else {
-      const onModel = (model, attempt = 1) => sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt, tries: PLAN_BACKUP_TRIES })
-      const result = await generatePlan(apiKey, file, teacherPrompt, { signal: abort.signal, onModel })
+      // Each model asked is logged by name only, so a failed build can be traced in the server logs.
+      const onModel = (model, attempt = 1) => {
+        console.log(`Plan by ${model}, try ${attempt}`)
+        sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt, tries: PLAN_BACKUP_TRIES })
+      }
+      const result = await generatePlan(apiKey, file, teacherPrompt, { signal, onModel })
       sendEvent(res, 'ready', result)
     }
   } catch (error) {
-    if (!abort.signal.aborted) sendEvent(res, 'error', describeError(error, 'Google could not read this file. Export it again, or try another file.'))
+    if (!abort.signal.aborted) {
+      console.error('Plan failed:', error.status ?? error.code ?? error.name)
+      const tooSlow = { code: 'model_busy', message: 'Google’s models are too slow right now. Try again in a few minutes.' }
+      sendEvent(res, 'error', timeUp.aborted ? tooSlow : describeError(error, 'Google could not read this file. Export it again, or try another file.'))
+    }
   }
   clearInterval(keepAlive)
   res.end()
@@ -81,7 +92,8 @@ app.post('/api/turn', requireKey, express.json({ limit: '200kb' }), async (req, 
   res.on('close', () => abort.abort()) // Stop in the browser closes the connection, which stops the model
   openEventStream(res)
   try {
-    const { stream: reply } = await startTurn(res.locals.apiKey, parsed.data, abort.signal)
+    const { stream: reply, model } = await startTurn(res.locals.apiKey, parsed.data, abort.signal)
+    console.log(`Turn (${parsed.data.move}) by ${model}`)
     let split = SPLIT_START
     for await (const chunk of reply) {
       const result = splitChunk(split, chunk.text ?? '')

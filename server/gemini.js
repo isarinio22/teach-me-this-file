@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODEL, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
+import { PLAN_BACKUP_MODELS, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODELS, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -27,8 +27,9 @@ export async function countPlanTokens(apiKey, file, teacherPrompt, signal) {
   return result.totalTokens
 }
 
-// One attempt: ask, parse, validate. Returns { plan }, or { raw, problems } when the reply breaks the rules.
-async function askForPlan(ai, model, contents, signal, thinking) {
+// One attempt: ask, parse, validate. Returns { model, plan }, or { model, raw, problems } when the
+// reply breaks the rules.
+async function askForPlan(ai, model, contents, signal) {
   const response = await ai.models.generateContent({
     model,
     contents,
@@ -36,8 +37,8 @@ async function askForPlan(ai, model, contents, signal, thinking) {
       systemInstruction: planPrompt,
       responseMimeType: 'application/json',
       responseJsonSchema: lessonPlanJsonSchema,
+      thinkingConfig: { thinkingLevel: PLAN_THINKING },
       abortSignal: signal,
-      ...(thinking && { thinkingConfig: { thinkingLevel: thinking } }),
     },
   })
   const raw = response.text ?? ''
@@ -45,63 +46,65 @@ async function askForPlan(ai, model, contents, signal, thinking) {
   try {
     json = JSON.parse(raw)
   } catch {
-    return { raw, problems: ['the reply was not valid JSON'] }
+    return { model, raw, problems: ['the reply was not valid JSON'] }
   }
   const checked = lessonPlanSchema.safeParse(json)
-  if (checked.success) return { plan: checked.data }
+  if (checked.success) return { model, plan: checked.data }
   const problems = checked.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-  return { raw, problems }
+  return { model, raw, problems }
 }
 
+// Busy, rate limited, failing, or not open to this key: worth asking another model.
 function isUnavailable(error) {
-  return error instanceof ApiError && [429, 500, 503].includes(error.status)
+  return error instanceof ApiError && [404, 429, 500, 503].includes(error.status)
 }
 
-// The backup model, with a few tries: a "busy" answer from Google often clears within seconds.
-// onModel(model, attempt) lets the screen say what is happening.
-async function askBackup(ai, contents, signal, onModel) {
+// The backup models take turns: when one is busy the next is asked at once, and after each full
+// round the app waits a little longer, because a "busy" answer from Google often clears within
+// seconds. onModel(model, attempt) lets the screen say what is happening.
+async function askBackups(ai, contents, signal, onModel) {
   for (let attempt = 1; ; attempt++) {
-    onModel(PLAN_BACKUP_MODEL, attempt)
+    const model = PLAN_BACKUP_MODELS[(attempt - 1) % PLAN_BACKUP_MODELS.length]
+    onModel(model, attempt)
     try {
-      return await askForPlan(ai, PLAN_BACKUP_MODEL, contents, signal)
+      return await askForPlan(ai, model, contents, signal)
     } catch (error) {
       if (signal?.aborted || !isUnavailable(error) || attempt === PLAN_BACKUP_TRIES) throw error
-      await new Promise((resolve) => setTimeout(resolve, attempt * PLAN_RETRY_WAIT_SECONDS * 1000))
+      const round = attempt / PLAN_BACKUP_MODELS.length
+      if (Number.isInteger(round)) await new Promise((resolve) => setTimeout(resolve, round * PLAN_RETRY_WAIT_SECONDS * 1000))
     }
   }
 }
 
 // Builds the lesson plan: the plan model first; if it is unavailable or misses its deadline, the
-// backup model, with a few tries; and one repair, by the backup, if the plan breaks the rules.
+// backup models in turn; and one repair, by a backup, if the plan breaks the rules.
+// Returns { plan, model, usedBackupModel }, where model is the one that wrote the plan.
 export async function generatePlan(apiKey, file, teacherPrompt, { signal, onModel }) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = planContents(file, teacherPrompt)
 
-  let model = PLAN_MODEL
   let attempt
-  onModel(model)
+  onModel(PLAN_MODEL)
   const deadline = AbortSignal.timeout(PLAN_DEADLINE_SECONDS * 1000)
   try {
-    attempt = await askForPlan(ai, model, contents, AbortSignal.any(signal ? [deadline, signal] : [deadline]), PLAN_THINKING)
+    attempt = await askForPlan(ai, PLAN_MODEL, contents, AbortSignal.any(signal ? [deadline, signal] : [deadline]))
   } catch (error) {
-    // The teacher pressing Cancel stops everything; a slow or unavailable model hands over.
+    // Cancel (or the build running out of time) stops everything; a slow or unavailable model hands over.
     if (signal?.aborted || !(deadline.aborted || isUnavailable(error))) throw error
-    model = PLAN_BACKUP_MODEL
-    attempt = await askBackup(ai, contents, signal, onModel)
+    attempt = await askBackups(ai, contents, signal, onModel)
   }
 
   if (!attempt.plan) {
-    // The repair shows the fast backup model the reply and the rules it broke.
+    // The repair shows a backup model the reply and the rules it broke.
     const complaint = `That plan breaks these rules:\n- ${attempt.problems.join('\n- ')}\nReturn the complete corrected plan.`
     const repair = [...contents, { role: 'model', parts: [{ text: attempt.raw }] }, { role: 'user', parts: [{ text: complaint }] }]
-    model = PLAN_BACKUP_MODEL
-    attempt = await askForPlan(ai, model, repair, signal)
+    attempt = await askBackups(ai, repair, signal, onModel)
   }
   if (!attempt.plan) {
     console.error('Plan rejected twice:', attempt.problems.join('; '))
     throw Object.assign(new Error('plan_invalid'), { code: 'plan_invalid' })
   }
-  return { plan: attempt.plan, usedBackupModel: model !== PLAN_MODEL }
+  return { plan: attempt.plan, model: attempt.model, usedBackupModel: attempt.model !== PLAN_MODEL }
 }
 
 // The situation of one turn, written out for the tutor. Labels match the ones in prompts/tutor.md.
@@ -134,19 +137,19 @@ function turnText(turn) {
   return lines.join('\n')
 }
 
-// Starts one tutor turn. Returns the stream of its reply and the model that is writing it. If the
-// tutor model is unavailable before the reply starts, the one retry goes to the backup model.
+// Starts one tutor turn. Returns the stream of its reply and the model that is writing it. While a
+// model is unavailable before the reply starts, the next backup model is asked, once each.
 export async function startTurn(apiKey, turn, signal) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = [{ role: 'user', parts: [{ text: turnText(turn) }] }]
-  const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, abortSignal: signal }
-  try {
-    const stream = await ai.models.generateContentStream({ model: TUTOR_MODEL, contents, config: { ...config, thinkingConfig: { thinkingLevel: TUTOR_THINKING } } })
-    return { stream, model: TUTOR_MODEL }
-  } catch (error) {
-    if (!isUnavailable(error)) throw error
-    const stream = await ai.models.generateContentStream({ model: TUTOR_BACKUP_MODEL, contents, config })
-    return { stream, model: TUTOR_BACKUP_MODEL }
+  const config = { systemInstruction: tutorPrompt, maxOutputTokens: TUTOR_MAX_TOKENS, thinkingConfig: { thinkingLevel: TUTOR_THINKING }, abortSignal: signal }
+  const models = [TUTOR_MODEL, ...TUTOR_BACKUP_MODELS]
+  for (const model of models) {
+    try {
+      return { stream: await ai.models.generateContentStream({ model, contents, config }), model }
+    } catch (error) {
+      if (signal?.aborted || !isUnavailable(error) || model === models.at(-1)) throw error
+    }
   }
 }
 
