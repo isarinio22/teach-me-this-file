@@ -41,7 +41,12 @@ export const TUTOR_THINKING = 'LOW'
 
 // How long each tutor model gets to start its reply before the next one is asked. Measured on a free
 // key: replies start in 2 to 5 seconds, but on a phone two turns got no reply for 3 and 5 minutes.
-export const TUTOR_START_SECONDS = Number(process.env.TUTOR_START_SECONDS) || 20
+export const TUTOR_START_SECONDS = Number(process.env.TUTOR_START_SECONDS) || 15
+
+// The models are asked in turn, round after round, with a short pause after each round, until one
+// answers or this much time has passed. Then the student sees an error and can retry.
+export const TUTOR_WAIT_SECONDS = Number(process.env.TUTOR_WAIT_SECONDS) || 45
+export const TUTOR_RETRY_WAIT_SECONDS = Number(process.env.TUTOR_RETRY_WAIT_SECONDS) || 2
 
 // The longest tutor turn, in tokens. A turn is meant to be under 150 words; this is a cost ceiling.
 // The model's thinking counts against it too, and Hebrew or Arabic needs more tokens per word.

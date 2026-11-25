@@ -104,7 +104,7 @@ function optionChosen(state, optionIndex) {
   const option = currentItem(state).options[optionIndex]
   let next = {
     ...state,
-    messages: withMessage(state, { role: 'student', text: option.text, choice: true }),
+    messages: withMessage(state, { role: 'student', text: option.text, choice: state.itemKind }), // which question it answers
     lastAnswer: { optionIndex, correct: option.correct },
     waitingFor: 'answer',
   }

@@ -22,12 +22,13 @@ export function LessonText({ children, className = '' }) {
 }
 
 // One thing the tutor said, written on the sheet like a note, not in a chat bubble.
-export default function TutorNote({ text, note, live, onShowSource }) {
+// waiting: what the student reads until the first words of a live reply arrive.
+export default function TutorNote({ text, note, live, waiting, onShowSource }) {
   return (
     <div className="flex gap-3">
       <TutorAvatar className="size-12" />
       <div className="min-w-0 flex-1" aria-live={live ? 'polite' : undefined}>
-        <LessonText className="text-lesson">{text || '…'}</LessonText>
+        {text || !waiting ? <LessonText className="text-lesson">{text || '…'}</LessonText> : <p className="text-lesson text-graphite motion-safe:animate-pulse">{waiting}</p>}
         {note && <p className="mt-1 text-small text-graphite">{note}</p>}
         {onShowSource && <Button variant="quiet" className="text-small" onClick={onShowSource}>Show source</Button>}
       </div>

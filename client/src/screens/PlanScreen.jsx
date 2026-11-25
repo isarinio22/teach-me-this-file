@@ -23,7 +23,7 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
     <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
       <h1 dir="auto" className="text-title font-bold md:text-display">{plan.title}</h1>
       <p className="mt-3 text-lesson text-graphite">
-        {plan.steps.length} steps, about {plan.minutes} minutes, taught in {plan.language}.
+        Lesson plan: {plan.steps.length} steps, about {plan.minutes} minutes, taught in {plan.language}.
       </p>
 
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">
@@ -33,12 +33,18 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
               <Alert>The main model was not available, so a backup model wrote this plan. Read the questions before you start.</Alert>
             </div>
           )}
+          <div className="mb-6 border-b border-grid pb-6">
+            <h2 className="font-bold">For the teacher: check the plan</h2>
+            <p className="mt-2 text-graphite">
+              There is nothing to answer on this page. These are the steps the tutor will teach, in order, and the question that ends each one. Remove any step you don&rsquo;t want, then press Start lesson. The student meets one step at a time and answers its question in the lesson.
+            </p>
+          </div>
           <ol>
             {plan.steps.map((step, index) => (
               <li key={step.id} className="border-t border-grid py-6 first:border-t-0 first:pt-0">
                 <h2 dir="auto" className="text-step font-bold"><span className="text-blue">{index + 1}.</span> {step.title}</h2>
                 <LessonText className="mt-2">{step.objective}</LessonText>
-                <p className="mt-4 text-small text-graphite">Check question</p>
+                <p className="mt-4 text-small text-graphite">The question the student answers at the end of this step</p>
                 <LessonText className="mt-1 border-s-2 border-grid ps-3 text-graphite">{step.main.stem}</LessonText>
                 {plan.steps.length > 1 && (
                   <Button variant="quiet" className="mt-2" aria-label={`Remove step ${index + 1}: ${step.title}`} onClick={() => onRemoveStep(step.id)}>
@@ -56,9 +62,9 @@ export default function PlanScreen({ plan, usedBackupModel, onRemoveStep, onStar
 
         <aside className="mt-10 lg:mt-2 lg:w-margin">
           <TutorAvatar className="size-24" />
-          <h2 className="mt-3 font-bold">Before you start</h2>
+          <h2 className="mt-3 font-bold">In the lesson</h2>
           <p className="mt-3 text-small text-graphite">
-            Remove any step you don&rsquo;t want. Each step ends with its check question. A wrong answer gets a hint aimed at that mistake; a second one gets a new explanation and a parallel question.
+            The tutor explains each step, then asks its question. A wrong answer gets a hint aimed at that mistake; a second one gets a new explanation and a similar question.
           </p>
         </aside>
       </div>

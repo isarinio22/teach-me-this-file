@@ -4,6 +4,7 @@ import Alert from '../components/Alert.jsx'
 import AnswerSheet from '../components/AnswerSheet.jsx'
 import Button from '../components/Button.jsx'
 import LessonPath from '../components/LessonPath.jsx'
+import { HINTS, HowItWorks, SLOW_NOTE, WAITING } from '../components/LessonGuide.jsx'
 import SourceNote from '../components/SourceNote.jsx'
 import TutorNote from '../components/TutorNote.jsx'
 import { currentItem, currentStep, nextMove, optionOrder, section, turnRequest } from '../lesson.js'
@@ -12,28 +13,6 @@ const WIDE_SCREEN = '(min-width: 64rem)' // where the sources sit in the margin 
 // Lessons in these languages read from the right: tutor notes, answers and the answer sheet.
 const RIGHT_TO_LEFT = /hebrew|arabic|persian|farsi|urdu|yiddish|עברית|عربي/i
 
-// What to do now, for the moments when the next action is the student's to find.
-const HINTS = {
-  opening: 'Answer the tutor’s question below, then press Send.',
-  teaching: 'Ask the tutor anything about this step. When you’re ready, press “I’m ready for the question”.',
-}
-
-// Shown at the start, so the student knows the order of things before the first question.
-function HowItWorks() {
-  return (
-    <div className="mb-6 border-b border-grid pb-6 text-small text-graphite">
-      <h2 className="font-bold text-ink">How this lesson works</h2>
-      <ol className="mt-2 list-decimal space-y-1 ps-5">
-        <li>The tutor asks what you already know. Answer in your own words; there are no wrong answers here.</li>
-        <li>Each step teaches one idea. Read it, ask the tutor anything, then answer one question about it.</li>
-        <li>A wrong answer gets a hint and another try.</li>
-        <li>At the end, the steps you found hardest come back, and you see a report.</li>
-      </ol>
-      <p className="mt-2">Steps open in order. Tap a finished step to read it again.</p>
-    </div>
-  )
-}
-
 export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const [live, setLive] = useState(null) // the tutor's reply while it streams in: { text }
   const [failure, setFailure] = useState(null) // { error, text } when a turn failed; Retry repeats it
@@ -41,6 +20,7 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const [picked, setPicked] = useState(null) // { section, ids }: the note whose sources are shown
   const [sheetOpen, setSheetOpen] = useState(false)
   const [rereadIndex, setRereadIndex] = useState(null) // a finished step, opened again from the path to read
+  const [slow, setSlow] = useState(false) // the reply has not started after 8 seconds
   const controller = useRef(null)
   const liveNote = useRef(null)
 
@@ -62,6 +42,14 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   useEffect(() => {
     if (live && live.text === '') liveNote.current?.scrollIntoView({ block: 'nearest' })
   }, [live])
+
+  const silent = live?.text === ''
+  useEffect(() => {
+    setSlow(false)
+    if (!silent) return
+    const timer = setTimeout(() => setSlow(true), 8000)
+    return () => clearTimeout(timer)
+  }, [silent])
 
   async function runTurn(move) {
     controller.current = new AbortController()
@@ -107,6 +95,35 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const canWrite = idle && !['closing', 'finished'].includes(lesson.phase)
   const hint = idle && HINTS[lesson.phase]
   const direction = RIGHT_TO_LEFT.test(lesson.plan.language) ? 'rtl' : 'ltr'
+  const waiting = lesson.waitingFor === 'message' ? WAITING.respond : WAITING[move]
+
+  // The answer sheet sits where its question was asked: the replies to an answer come below it, in view.
+  const sheetShown = !reread && ['checking', 'answered'].includes(lesson.phase)
+  const firstAnswer = shown.findIndex((message) => message.choice === lesson.itemKind)
+  const split = sheetShown && firstAnswer !== -1 ? firstAnswer : shown.length
+  const showMessage = (message, index) =>
+    message.role === 'tutor' ? (
+      <TutorNote key={index} text={message.text} note={message.stopped ? 'Stopped' : ''} onShowSource={message.passageIds.length ? () => showSource(message.passageIds) : null} />
+    ) : (
+      <div key={index} className="flex justify-end ps-10 sm:ps-20">
+        <p dir="auto" className="rounded-field bg-desk px-4 py-2">
+          {message.choice && <span className="block text-small text-graphite">Your answer</span>}
+          {message.text}
+        </p>
+      </div>
+    )
+  const reply = !reread && (
+    <>
+      {live && <div ref={liveNote}><TutorNote text={live.text} live waiting={waiting} note={slow ? SLOW_NOTE : ''} /></div>}
+      {failure && (
+        <div className="space-y-3">
+          {failure.text && <TutorNote text={failure.text} note="Interrupted" />}
+          <Alert tone="error">{failure.error.message}</Alert>
+          <Button variant="secondary" onClick={() => setFailure(null)}>Retry</Button>
+        </div>
+      )}
+    </>
+  )
 
   return (
     <main className="mx-auto max-w-sheet px-4 py-6 lg:py-10">
@@ -117,27 +134,9 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
           {lesson.phase === 'opening' && !reread && <HowItWorks />}
           <h1 dir="auto" className="text-step font-bold">{heading}</h1>
           <div dir={direction} className="mt-6 space-y-6">
-            {shown.map((message, index) =>
-              message.role === 'tutor' ? (
-                <TutorNote key={index} text={message.text} note={message.stopped ? 'Stopped' : ''} onShowSource={message.passageIds.length ? () => showSource(message.passageIds) : null} />
-              ) : (
-                <div key={index} className="flex justify-end ps-10 sm:ps-20">
-                  <p dir="auto" className="rounded-field bg-desk px-4 py-2">
-                    {message.choice && <span className="block text-small text-graphite">Your answer</span>}
-                    {message.text}
-                  </p>
-                </div>
-              ),
-            )}
-            {live && !reread && <div ref={liveNote}><TutorNote text={live.text} live /></div>}
-            {failure && !reread && (
-              <div className="space-y-3">
-                {failure.text && <TutorNote text={failure.text} note="Interrupted" />}
-                <Alert tone="error">{failure.error.message}</Alert>
-                <Button variant="secondary" onClick={() => setFailure(null)}>Retry</Button>
-              </div>
-            )}
-            {!reread && ['checking', 'answered'].includes(lesson.phase) && (
+            {shown.slice(0, split).map(showMessage)}
+            {split === shown.length && reply}
+            {sheetShown && (
               <AnswerSheet
                 key={`${here}-${lesson.itemKind}`}
                 item={item}
@@ -148,6 +147,8 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
                 onCheck={(optionIndex) => dispatch({ type: 'option_chosen', optionIndex })}
               />
             )}
+            {shown.slice(split).map((message, index) => showMessage(message, split + index))}
+            {split < shown.length && reply}
           </div>
 
           <div className="mt-8 space-y-4 border-t border-grid pt-6">
@@ -159,7 +160,7 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
             {idle && lesson.phase === 'finished' && <Button onClick={onFinish}>See the report</Button>}
             {canWrite && (
               <form onSubmit={send}>
-                <label htmlFor="message" className="block font-medium">{lesson.phase === 'opening' ? 'Your answer' : 'Write to the tutor'}</label>
+                <label htmlFor="message" className="block font-medium">{lesson.phase === 'opening' ? 'Your answer' : 'Ask the tutor a question'}</label>
                 <div className="mt-2 flex items-end gap-2">
                   <textarea id="message" dir="auto" rows={2} maxLength={1000} value={draft} onChange={(event) => setDraft(event.target.value)} className="block min-w-0 flex-1 rounded-field border border-graphite/70 bg-paper p-3" />
                   <Button type="submit" variant="secondary">Send</Button>

@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODELS, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODELS, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_START_SECONDS, TUTOR_THINKING } from './config.js'
+import { PLAN_BACKUP_MODELS, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODELS, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_RETRY_WAIT_SECONDS, TUTOR_START_SECONDS, TUTOR_THINKING, TUTOR_WAIT_SECONDS } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -138,12 +138,15 @@ function turnText(turn) {
 }
 
 // Starts one tutor turn. Returns the stream of its reply and the model that is writing it. Each model
-// gets TUTOR_START_SECONDS to start replying; one that is unavailable or silent hands over to the next.
+// gets TUTOR_START_SECONDS to start replying; one that is unavailable or silent hands over to the next,
+// round after round, for up to TUTOR_WAIT_SECONDS.
 export async function startTurn(apiKey, turn, signal) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = [{ role: 'user', parts: [{ text: turnText(turn) }] }]
   const models = [TUTOR_MODEL, ...TUTOR_BACKUP_MODELS]
-  for (const model of models) {
+  const giveUpAt = Date.now() + TUTOR_WAIT_SECONDS * 1000
+  for (let attempt = 0; ; attempt++) {
+    const model = models[attempt % models.length]
     const silent = new AbortController()
     const timer = setTimeout(() => silent.abort(), TUTOR_START_SECONDS * 1000)
     const abortSignal = AbortSignal.any(signal ? [signal, silent.signal] : [silent.signal])
@@ -154,7 +157,9 @@ export async function startTurn(apiKey, turn, signal) {
       return { stream: withFirst(first, stream), model }
     } catch (error) {
       if (signal?.aborted || !(silent.signal.aborted || isUnavailable(error))) throw error
-      if (model === models.at(-1)) throw silent.signal.aborted ? Object.assign(new Error('too_slow'), { code: 'too_slow' }) : error
+      if (Date.now() >= giveUpAt) throw silent.signal.aborted ? Object.assign(new Error('too_slow'), { code: 'too_slow' }) : error
+      const roundDone = (attempt + 1) % models.length === 0
+      if (roundDone) await new Promise((resolve) => setTimeout(resolve, TUTOR_RETRY_WAIT_SECONDS * 1000))
     } finally {
       clearTimeout(timer) // once the reply has started, the deadline no longer applies
     }

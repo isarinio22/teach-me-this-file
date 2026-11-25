@@ -6,6 +6,8 @@ const script = vi.hoisted(() => {
   process.env.PLAN_DEADLINE_SECONDS = '0.05' // a 50 ms deadline and 10 ms waits, so the tests are fast
   process.env.PLAN_RETRY_WAIT_SECONDS = '0.01'
   process.env.TUTOR_START_SECONDS = '0.05'
+  process.env.TUTOR_WAIT_SECONDS = '0.12'
+  process.env.TUTOR_RETRY_WAIT_SECONDS = '0.01'
   return { replies: [], modelsCalled: [] }
 })
 
@@ -174,8 +176,15 @@ test('a tutor model that does not start its reply in time hands over to the next
   expect(await words(stream)).toBe('Hello.')
 })
 
+test('a tutor turn goes round the models again while all of them are busy', async () => {
+  script.replies = [busy(), busy(), busy(), 'Hello.']
+  const { model } = await startTurn('test-key', openingTurn)
+  expect(model).toBe(TUTOR_MODEL)
+  expect(script.modelsCalled).toEqual([TUTOR_MODEL, ...TUTOR_BACKUP_MODELS, TUTOR_MODEL])
+})
+
 test('a turn whose models all stay silent ends with a clear message', async () => {
-  script.replies = ['too slow', 'too slow', 'too slow']
+  script.replies = Array(6).fill('too slow')
   const error = await startTurn('test-key', openingTurn).catch((caught) => caught)
   expect(describeError(error)).toMatchObject({ code: 'model_busy', message: expect.stringContaining('too slow') })
 })
