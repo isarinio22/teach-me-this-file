@@ -22,7 +22,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 **Streaming, with Stop.** Each turn streams the tutor's words, then a delimiter line, then a small JSON block (which passages it used, whether the student is ready). A tested splitter handles the delimiter even when it arrives cut across two network chunks. Stop aborts the request in the browser and the model call on the server.
 
-**Models a free key can test.** Plans: Gemini 4 Hydrogen, the strongest model a free key can call, with low thinking and a 2-minute deadline. Tutor turns: Gemini 3.8 Flash with low thinking, for speed. Both hand over to Gemini 3.5 Flash-Lite when they are busy, rate limited or too slow, so a lesson still gets built inside Cloud Run's 5-minute limit. Flash-Lite is the backup because on a free key it kept answering when the others were busy or over their limit. Any model can be swapped with an environment variable, without a code change.
+**Models a free key can test.** Plans: Gemini 4 Hydrogen, the strongest model a free key can call, with low thinking and a 50-second deadline. Tutor turns: Gemini 3.8 Flash with low thinking, for speed. Both hand over to Gemini 3.5 Flash-Lite when they are busy, rate limited or too slow. For plans, Flash-Lite gets five tries over about a minute, because Google's "busy" answers usually clear within that time. Everything finishes inside Cloud Run's 5-minute limit, and the screen counts the seconds and says what is happening while it waits. Flash-Lite is the backup because on a free key it kept answering when the others were busy or over their limit. Any model can be swapped with an environment variable, without a code change.
 
 **Hosting: one stateless container on Cloud Run.** The same URL serves the API and the built client. The server keeps nothing between requests, so a cold start loses nothing, and the app tells the user when the server is waking up. It runs on 0 to 2 instances: free while idle, and a public URL cannot run up a bill.
 
@@ -52,6 +52,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 - **Google's free tier is the weakest link.** On 24 and 25 November most long requests got "busy" answers. A free key allows 20 requests a day on Gemini 4 Hydrogen and 20 on Gemini 3.8 Flash, and "busy" answers count against them. On a bad day, or after 20 plans, a free key's lessons come from Flash-Lite, the weakest model; the app says so on the Plan screen.
 - **Hydrogen was slow.** At its default thinking level it took 45 seconds to over 5 minutes per plan. At the low level it planned a 92-page PDF in 35 seconds, but that is one measurement, and most of my test plans were written by the Flash-Lite backup.
+- **On a bad day a free key still fails.** Tested on a phone, a PDF waited two minutes and then failed. The wait is now shorter, retried and visible, but in a final check one of three PDFs was still refused after five tries over a minute. The app then says Google is busy and to try again.
 - **Real handwriting and real phone photos are untested.** The test images were made from printed pages; a handwriting font is much neater than a student's notes.
 - **Misconceptions in the report can be in the teacher's language rather than the lesson's:** in a French lesson they came out in English.
 - **Hints can come close to the answer.** A first hint pointed the student at "the air and water around it" for a question whose answer is carbon dioxide and water. A teach turn can also come close to the answer of the check that follows; the parallel question after a miss is the real test.
@@ -124,3 +125,4 @@ The Hebrew, Arabic, table and long PDFs are Wikipedia articles printed to PDF. T
 - Hebrew answer sheets laid out from the left.
 - A crash when changing screens.
 - The plan model running past Cloud Run's 5-minute limit on an 8-page PDF. It now thinks less and has a deadline, after which the backup takes over.
+- On a phone, two silent minutes of waiting before an error. The screen now counts the seconds and explains each step, and the backup retries.
