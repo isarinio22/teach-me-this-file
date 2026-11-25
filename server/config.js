@@ -13,11 +13,12 @@ export const PLAN_THINKING = 'LOW'
 // 35 seconds; on a free key it can also accept a request and then stall, so it is not waited for long.
 export const PLAN_DEADLINE_SECONDS = Number(process.env.PLAN_DEADLINE_SECONDS) || 50
 
-// The backup's tries when Google answers "busy", and the wait before the second (doubled before the
-// third). On a free key "busy" usually clears within seconds. Everything stays inside Cloud Run's
-// 300-second limit on a request.
-export const PLAN_BACKUP_TRIES = 3
-export const PLAN_RETRY_WAIT_SECONDS = Number(process.env.PLAN_RETRY_WAIT_SECONDS) || 4
+// The backup's tries when Google answers "busy", and the wait before the second try (then twice,
+// three times, four times as long). Measured on a free key: a plan request was refused three times
+// and accepted on the fourth, about 45 seconds later. With the deadline above, the worst case is
+// about 150 seconds, inside Cloud Run's 300-second limit on a request.
+export const PLAN_BACKUP_TRIES = 5
+export const PLAN_RETRY_WAIT_SECONDS = Number(process.env.PLAN_RETRY_WAIT_SECONDS) || 5
 
 // Takes over when PLAN_MODEL is busy, rate limited, too slow, or not open to this key, and writes
 // the one repair. Flash-Lite answers fast, and on a free key it kept answering when the others were

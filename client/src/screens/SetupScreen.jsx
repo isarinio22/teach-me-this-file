@@ -34,7 +34,7 @@ function sizeLabel(bytes) {
 
 // What the teacher reads while waiting: how long it has been, and what the app is doing about it.
 function waitingNote(stage, seconds) {
-  if (stage.backup && stage.attempt > 1) return `Google is busy, so the app is trying again (try ${stage.attempt} of 3).`
+  if (stage.backup && stage.attempt > 1) return `Google is busy, so the app is trying again (try ${stage.attempt} of ${stage.tries}).`
   if (stage.backup) return 'The first model was slow or busy, so a faster model is finishing the plan.'
   if (seconds >= 20) return 'Still working. Long and scanned files take longer; keep this page open.'
   return 'A short file usually takes under a minute.'

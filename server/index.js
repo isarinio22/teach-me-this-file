@@ -2,7 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MAX_FILE_BYTES, PLAN_MODEL, TOKEN_BUDGET } from './config.js'
+import { MAX_FILE_BYTES, PLAN_BACKUP_TRIES, PLAN_MODEL, TOKEN_BUDGET } from './config.js'
 import { checkFile } from './files.js'
 import { countPlanTokens, describeError, generatePlan, startTurn } from './gemini.js'
 import { turnRequestSchema } from './schemas.js'
@@ -59,7 +59,7 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
       const message = `This file is too long for one lesson: ${size} (roughly 180 PDF pages). Upload only the chapter you want to teach.`
       sendEvent(res, 'error', { code: 'over_token_budget', message })
     } else {
-      const onModel = (model, attempt = 1) => sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt })
+      const onModel = (model, attempt = 1) => sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt, tries: PLAN_BACKUP_TRIES })
       const result = await generatePlan(apiKey, file, teacherPrompt, { signal: abort.signal, onModel })
       sendEvent(res, 'ready', result)
     }

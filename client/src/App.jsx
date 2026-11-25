@@ -24,7 +24,7 @@ export default function App() {
   const [screen, setScreen] = useState('setup') // setup, plan, lesson or report
   const [file, setFile] = useState(null)
   const [prompt, setPrompt] = useState('')
-  const [stage, setStage] = useState(null) // while a lesson is being built: { name, backup, attempt, startedAt }
+  const [stage, setStage] = useState(null) // while a lesson is being built: { name, backup, attempt, tries, startedAt }
   const [buildError, setBuildError] = useState(null)
   const [built, setBuilt] = useState(null) // { plan, usedBackupModel }
   // The lesson plan and the student's progress, changed only by events (see lesson.js).
@@ -70,7 +70,7 @@ export default function App() {
       prompt,
       apiKey,
       signal: buildController.current.signal,
-      onStage: (name, data) => setStage((now) => ({ ...now, name, backup: data.backup, attempt: data.attempt })),
+      onStage: (name, data) => setStage((now) => ({ ...now, name, backup: data.backup, attempt: data.attempt, tries: data.tries })),
     })
     setStage(null)
     if (result.cancelled) return

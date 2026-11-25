@@ -95,11 +95,11 @@ test('tries the backup model again when it is busy', async () => {
   expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL])
 })
 
-test('stops after three busy answers from the backup model', async () => {
-  script.replies = [busy(), busy(), busy(), busy()]
+test('stops after five busy answers from the backup model', async () => {
+  script.replies = Array.from({ length: 6 }, busy)
   const error = await build().catch((caught) => caught)
   expect(describeError(error, '').code).toBe('model_busy')
-  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL])
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, ...Array(5).fill(PLAN_BACKUP_MODEL)])
 })
 
 test('asks for one repair when a question has two correct options', async () => {
