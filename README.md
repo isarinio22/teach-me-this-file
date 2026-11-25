@@ -54,7 +54,7 @@ client/src/App.jsx                    Switches screens; holds the API key, the b
 client/src/styles.css                 Design tokens (colors, type, radii, animations) and lesson text styles
 client/src/api.js                     Calls the server and reads its event streams
 client/src/lesson.js                  Lesson state, nextMove() and the teaching rules; pure functions
-client/src/lesson.test.js             Tests for the hint ladder, outcomes, recap, shuffling and what the tutor sees
+client/src/lesson.test.js             Tests for the hint ladder, outcomes, the end of the lesson, shuffling and what the tutor sees
 client/src/screens/SetupScreen.jsx    File and prompt, build progress with a count of the seconds, errors
 client/src/screens/LessonScreen.jsx   The lesson: runs each tutor turn, Stop, Retry, sources
 client/src/screens/ReportScreen.jsx   Each step's outcome and the misconceptions caught

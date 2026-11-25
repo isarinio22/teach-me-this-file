@@ -4,7 +4,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 ## 1. The main choices, and why
 
-**The app decides, the model talks.** The teaching method is code, not a prompt. `nextMove()` in `client/src/lesson.js` reads the lesson state and picks the next move: open, teach, hint, reteach, reveal, confirm, respond, recap or wrap up. Multiple-choice answers are graded by the app, instantly and always correctly. The model writes the words of each move. A prompt can ask a model to follow a method; code makes sure it does, and the method can be unit-tested.
+**The app decides, the model talks.** The teaching method is code, not a prompt. `nextMove()` in `client/src/lesson.js` reads the lesson state and picks the next move: open, teach, hint, reteach, reveal, confirm, respond or wrap up. Multiple-choice answers are graded by the app, instantly and always correctly. The model writes the words of each move. A prompt can ask a model to follow a method; code makes sure it does, and the method can be unit-tested.
 
 **My method** ([docs/PEDAGOGY.md](docs/PEDAGOGY.md)):
 - Find out what the student already knows.
@@ -12,7 +12,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 - Every wrong option is written to catch one specific misconception.
 - Hints climb a ladder: first a hint aimed at that misconception; then a different explanation and a parallel question; then the answer, and the step is marked for review.
 - A right answer gets a short "why", so a lucky guess still teaches.
-- Up to two of the weakest steps come back at the end.
+- The lesson ends with a short summary that names the one idea most worth going over again, and a report for the teacher.
 
 **The file is read once, into a plan.** One call to the plan model turns the file into structured JSON: steps, short verbatim passages with their page, and two questions per step. Zod checks it against the teaching rules (exactly one correct option, a misconception on every wrong option, no step pointing to a missing passage), with one repair call if needed. After that, a tutor turn sees only the current step's passages, never the whole file. That keeps turns fast and cheap, and keeps the tutor grounded.
 
@@ -46,6 +46,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 - **The Gemini Files API.** It would lift the 14 MB limit, but adds a second request and a copy of the teacher's file on Google's side for 48 hours.
 - **Splitting long files automatically.** Choosing what to teach from a 300-page book is the teacher's call, so the app asks for the chapter.
 - **A router, a state library or a UI kit.** Three screens and one reducer do not need them.
+- **Asking the weakest steps again at the end.** My method had it, as spaced retrieval. In practice it brought the student back to questions they had already answered: a step missed twice had used both of its questions. I chose a short summary and the report instead of writing new questions at the end.
 - **A screen for the teacher to review the plan.** I built one, where the teacher saw each step and its question and could remove steps. Testing on my phone as a student, I read it as a test to answer, and it switched from teacher to student in the middle of the flow. The brief goes straight from the upload to the chat, so now the lesson opens as soon as it is built. The teacher's view is the report at the end.
 - **Gemini 4 Neon for plans.** It is likely better, but needs a paid key, and I could not have tested it.
 
@@ -72,8 +73,8 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 ## 5. How I know it works
 
-**Unit tests (41, the model is mocked):**
-- the hint ladder and each step outcome, the recap, shuffled options;
+**Unit tests (40, the model is mocked):**
+- the hint ladder and each step outcome, going straight to the wrap-up after the last step, shuffled options;
 - what the tutor is allowed to see for each move;
 - the stream splitter with the delimiter cut across chunks, with missing JSON, and with invalid JSON;
 - file checks;
@@ -119,10 +120,10 @@ The Hebrew, Arabic, table and long PDFs are Wikipedia articles printed to PDF. T
 - The lesson opened in French by asking what the student knew.
 - A right answer got "Exactement !" and the why.
 - On step 2, the first wrong answer got a hint at its misconception ("glucose isn't what makes leaves green") without the answer. The second got a new explanation with an analogy, then a different question. The third got the answer, explained, and the step was marked for review.
-- The weak step came back as a review question, then a wrap-up, then the report with the three misconceptions caught.
+- The weak step came back as a review question (a review I later removed), then a wrap-up, then the report with the three misconceptions caught.
 - Google dropped three replies along the way; each time Retry recovered the lesson.
 
-**These runs found thirteen bugs, now fixed:**
+**These runs found fourteen bugs, now fixed:**
 - Raw `$` signs in math questions.
 - Hebrew answer sheets laid out from the left.
 - A crash when changing screens.
@@ -135,4 +136,5 @@ The Hebrew, Arabic, table and long PDFs are Wikipedia articles printed to PDF. T
 - After an answer, nothing seemed to happen, and the hint appeared above the answer sheet, out of view. The tutor now shows a typing bubble that says what is coming ("Not quite. The tutor is typing you a hint…"), and replies to an answer appear below the sheet.
 - A tutor turn failed as soon as all three models were busy once. They now go round again for up to 45 seconds.
 - Gemini 3.5 Flash left the JSON out of opening turns. The format rule is now repeated at the end of every turn.
+- At the end of a lesson on my phone, the review sent me back to questions I had already answered. The end review is gone.
 - As a student I did not know what to do first, and the step circles looked like buttons that did nothing. The lesson now opens with "How this lesson works", says what to do at each stage, and lets a finished step be reopened to read; steps not reached yet look locked.

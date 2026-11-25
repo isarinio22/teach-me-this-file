@@ -14,7 +14,7 @@ I taught psychometric exam prep and managed a team of teachers. This app teaches
    - Miss on the parallel question: explain the answer clearly, mark the step "needs review", and move on.
 6. **Right answers get a short "why",** so a lucky guess still teaches something.
 7. **The student does the thinking.** Tutor turns are short and always end with something for the student to do.
-8. **End with retrieval.** The weakest steps come back as up to 2 review questions before the lesson ends.
+8. **End with a summary.** The tutor wraps up: what went well, and the one idea most worth going over again. Earlier steps are not asked again at the end (my decision, 25 November: it felt like repeating questions already answered); the report shows the teacher every weak step.
 9. **Stay inside the material.** If the file doesn't cover something, the tutor says so and returns to the lesson.
 10. **The teacher stays in charge.** The teacher's prompt sets the language, level, tone and length. The method itself stays the same.
 
