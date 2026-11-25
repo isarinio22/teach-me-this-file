@@ -4,15 +4,13 @@ import Alert from './components/Alert.jsx'
 import Button from './components/Button.jsx'
 import { DeskObjects } from './components/Drawings.jsx'
 import Settings from './components/Settings.jsx'
-import { lessonReducer, removeStep } from './lesson.js'
+import { lessonReducer } from './lesson.js'
 import SetupScreen from './screens/SetupScreen.jsx'
 
 // The screens after Setup render Markdown and math, whose libraries are most of the app's size.
 // They are loaded separately, so the first page opens fast, and fetched as soon as a build starts.
-const loadPlanScreen = () => import('./screens/PlanScreen.jsx')
 const loadLessonScreen = () => import('./screens/LessonScreen.jsx')
 const loadReportScreen = () => import('./screens/ReportScreen.jsx')
-const PlanScreen = lazy(loadPlanScreen)
 const LessonScreen = lazy(loadLessonScreen)
 const ReportScreen = lazy(loadReportScreen)
 
@@ -21,12 +19,12 @@ export default function App() {
   // The key lives only in this component's memory: no localStorage, no cookie.
   const [apiKey, setApiKey] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [screen, setScreen] = useState('setup') // setup, plan, lesson or report
+  const [screen, setScreen] = useState('setup') // setup, lesson or report
   const [file, setFile] = useState(null)
   const [prompt, setPrompt] = useState('')
   const [stage, setStage] = useState(null) // while a lesson is being built: { name, backup, attempt, tries, startedAt }
   const [buildError, setBuildError] = useState(null)
-  const [built, setBuilt] = useState(null) // { plan, usedBackupModel }
+  const [usedBackupModel, setUsedBackupModel] = useState(false) // said in the report, for the teacher
   // The lesson plan and the student's progress, changed only by events (see lesson.js).
   const [lesson, dispatch] = useReducer(lessonReducer, null)
   const buildController = useRef(null)
@@ -60,7 +58,6 @@ export default function App() {
 
   async function build() {
     buildController.current = new AbortController()
-    loadPlanScreen()
     loadLessonScreen()
     loadReportScreen()
     setBuildError(null)
@@ -75,17 +72,13 @@ export default function App() {
     setStage(null)
     if (result.cancelled) return
     if (result.error) return setBuildError(result.error)
-    setBuilt(result)
-    setScreen('plan')
-  }
-
-  function backToSetup() {
-    if (!built.plan.teachable) chooseFile(null)
-    setScreen('setup')
-  }
-
-  function startLesson() {
-    dispatch({ type: 'started', plan: built.plan, teacherPrompt: prompt, now: Date.now(), seed: Math.random() })
+    if (!result.plan.teachable) {
+      const message = `This file can’t be taught as a lesson. ${result.plan.reason} A lesson needs school material: a chapter, an article, a worksheet or class notes.`
+      return setBuildError({ code: 'not_teachable', message })
+    }
+    // The teacher's part ends here: the lesson opens for the student at once.
+    setUsedBackupModel(result.usedBackupModel)
+    dispatch({ type: 'started', plan: result.plan, teacherPrompt: prompt, now: Date.now(), seed: Math.random() })
     setScreen('lesson')
   }
 
@@ -123,17 +116,8 @@ export default function App() {
         />
       )}
       <Suspense fallback={<p role="status" className="mx-auto max-w-sheet px-4 py-10 text-graphite">Opening the page.</p>}>
-        {screen === 'plan' && (
-          <PlanScreen
-            plan={built.plan}
-            usedBackupModel={built.usedBackupModel}
-            onRemoveStep={(stepId) => setBuilt({ ...built, plan: removeStep(built.plan, stepId) })}
-            onStart={startLesson}
-            onBack={backToSetup}
-          />
-        )}
         {screen === 'lesson' && <LessonScreen lesson={lesson} dispatch={dispatch} apiKey={apiKey} onFinish={() => setScreen('report')} />}
-        {screen === 'report' && <ReportScreen lesson={lesson} onRestart={teachAnotherFile} />}
+        {screen === 'report' && <ReportScreen lesson={lesson} usedBackupModel={usedBackupModel} onRestart={teachAnotherFile} />}
       </Suspense>
 
       {settingsOpen && <Settings apiKey={apiKey} onSave={saveKey} onClose={() => setSettingsOpen(false)} />}

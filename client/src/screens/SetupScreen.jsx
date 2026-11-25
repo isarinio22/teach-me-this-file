@@ -107,7 +107,7 @@ export default function SetupScreen({ hasKey, onAddKey, file, onFileChange, prom
     <main className="mx-auto max-w-sheet px-4 py-8 lg:py-12">
       <h1 className="text-title font-bold md:text-display">Turn a file into a lesson</h1>
       <p className="mt-3 max-w-page text-lesson text-graphite">
-        Upload school material and say how it should be taught. The tutor teaches it one step at a time and checks every step with a question.
+        Upload school material and say how it should be taught. The tutor teaches it one step at a time and checks every step with a question. When the lesson is ready, it opens for the student.
       </p>
 
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">

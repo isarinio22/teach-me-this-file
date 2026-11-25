@@ -9,12 +9,6 @@ const MAX_TEACH_TURNS = 2 // tutor turns in a step before its check question app
 const MAX_REVIEW = 2 // weakest steps asked again at the end (rule 8)
 const HISTORY = 6 // recent messages the tutor sees on each turn
 
-// The teacher may drop steps before the lesson starts. One step always stays.
-export function removeStep(plan, stepId) {
-  if (plan.steps.length === 1) return plan
-  return { ...plan, steps: plan.steps.filter((step) => step.id !== stepId) }
-}
-
 function startLesson({ plan, teacherPrompt, now, seed }) {
   return {
     plan,

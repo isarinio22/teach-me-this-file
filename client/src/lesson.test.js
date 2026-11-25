@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { lessonReducer, nextMove, optionOrder, removeStep, turnRequest, weakestSteps } from './lesson.js'
+import { lessonReducer, nextMove, optionOrder, turnRequest, weakestSteps } from './lesson.js'
 
 // A plan with n steps. In every main question option 1 is correct; in every parallel question, option 0.
 function makePlan(n = 3) {
@@ -41,14 +41,6 @@ function play(...events) {
 
 // Opening question, the student's answer, and the first step's teaching, up to its check question.
 const OPENING = ['reply', 'I know plants need light', 'reply']
-
-test('the teacher can remove a step, and the others keep their order', () => {
-  const plan = makePlan()
-  expect(removeStep(plan, 's2').steps.map((step) => step.id)).toEqual(['s1', 's3'])
-  expect(plan.steps).toHaveLength(3)
-  const oneStep = makePlan(1)
-  expect(removeStep(oneStep, 's1')).toBe(oneStep)
-})
 
 test('the lesson opens by asking what the student knows, and the answer is kept', () => {
   expect(nextMove(play())).toBe('open')

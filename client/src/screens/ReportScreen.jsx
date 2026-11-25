@@ -4,7 +4,7 @@ import { OUTCOME_LABELS, OutcomeMark } from '../components/LessonPath.jsx'
 import { LessonText } from '../components/TutorNote.jsx'
 
 // What a teacher wants to know the next morning: how each step went and which wrong ideas showed up.
-export default function ReportScreen({ lesson, onRestart }) {
+export default function ReportScreen({ lesson, usedBackupModel, onRestart }) {
   const { plan, outcomes } = lesson
   const firstTry = plan.steps.filter((step) => outcomes[step.id] === 'first_try').length
   const minutes = Math.max(1, Math.round((Date.now() - lesson.startedAt) / 60000))
@@ -18,6 +18,7 @@ export default function ReportScreen({ lesson, onRestart }) {
       <p className="mt-3 text-lesson text-graphite">
         <span dir="auto">{plan.title}</span>. {firstTry} of {plan.steps.length} steps right on the first try, in about {minutes} {minutes === 1 ? 'minute' : 'minutes'}.
       </p>
+      {usedBackupModel && <p className="mt-2 text-small text-graphite">The main model was not available, so a backup model wrote this lesson&rsquo;s plan.</p>}
 
       <div className="mt-8 lg:flex lg:items-start lg:gap-10">
         <section className="max-w-page rounded-sheet bg-paper p-5 shadow-sheet sm:p-8 lg:flex-1">
