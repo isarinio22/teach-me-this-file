@@ -9,9 +9,15 @@ export const PLAN_MODEL = process.env.PLAN_MODEL || 'gemini-4-hydrogen'
 // Thinks little: on its default level a short PDF took two to five minutes.
 export const PLAN_THINKING = 'LOW'
 
-// How long PLAN_MODEL gets before the backup takes over. Cloud Run ends every request at 300
-// seconds, so the backup still has time to finish inside that limit.
-export const PLAN_DEADLINE_SECONDS = Number(process.env.PLAN_DEADLINE_SECONDS) || 120
+// How long PLAN_MODEL gets before the backup takes over. At low thinking it planned a 92-page PDF in
+// 35 seconds; on a free key it can also accept a request and then stall, so it is not waited for long.
+export const PLAN_DEADLINE_SECONDS = Number(process.env.PLAN_DEADLINE_SECONDS) || 50
+
+// The backup's tries when Google answers "busy", and the wait before the second (doubled before the
+// third). On a free key "busy" usually clears within seconds. Everything stays inside Cloud Run's
+// 300-second limit on a request.
+export const PLAN_BACKUP_TRIES = 3
+export const PLAN_RETRY_WAIT_SECONDS = Number(process.env.PLAN_RETRY_WAIT_SECONDS) || 4
 
 // Takes over when PLAN_MODEL is busy, rate limited, too slow, or not open to this key, and writes
 // the one repair. Flash-Lite answers fast, and on a free key it kept answering when the others were

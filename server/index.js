@@ -59,7 +59,7 @@ app.post('/api/lessons', requireKey, upload.single('file'), async (req, res) => 
       const message = `This file is too long for one lesson: ${size} (roughly 180 PDF pages). Upload only the chapter you want to teach.`
       sendEvent(res, 'error', { code: 'over_token_budget', message })
     } else {
-      const onModel = (model) => sendEvent(res, 'planning', { backup: model !== PLAN_MODEL })
+      const onModel = (model, attempt = 1) => sendEvent(res, 'planning', { backup: model !== PLAN_MODEL, attempt })
       const result = await generatePlan(apiKey, file, teacherPrompt, { signal: abort.signal, onModel })
       sendEvent(res, 'ready', result)
     }

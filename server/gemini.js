@@ -2,7 +2,7 @@
 // that one call, and is never stored or logged.
 import { readFileSync } from 'node:fs'
 import { ApiError, GoogleGenAI } from '@google/genai'
-import { PLAN_BACKUP_MODEL, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_THINKING, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
+import { PLAN_BACKUP_MODEL, PLAN_BACKUP_TRIES, PLAN_DEADLINE_SECONDS, PLAN_MODEL, PLAN_RETRY_WAIT_SECONDS, PLAN_THINKING, TUTOR_BACKUP_MODEL, TUTOR_MAX_TOKENS, TUTOR_MODEL, TUTOR_THINKING } from './config.js'
 import { lessonPlanJsonSchema, lessonPlanSchema } from './schemas.js'
 
 const planPrompt = readFileSync(new URL('./prompts/plan.md', import.meta.url), 'utf8')
@@ -57,9 +57,22 @@ function isUnavailable(error) {
   return error instanceof ApiError && [429, 500, 503].includes(error.status)
 }
 
-// Builds the lesson plan. At most three calls: the plan model; the backup model if the first is
-// unavailable or misses its deadline; and one repair, by the backup, if the plan breaks the rules.
-// onModel is called with the model name each time a model starts working.
+// The backup model, with a few tries: a "busy" answer from Google often clears within seconds.
+// onModel(model, attempt) lets the screen say what is happening.
+async function askBackup(ai, contents, signal, onModel) {
+  for (let attempt = 1; ; attempt++) {
+    onModel(PLAN_BACKUP_MODEL, attempt)
+    try {
+      return await askForPlan(ai, PLAN_BACKUP_MODEL, contents, signal)
+    } catch (error) {
+      if (signal?.aborted || !isUnavailable(error) || attempt === PLAN_BACKUP_TRIES) throw error
+      await new Promise((resolve) => setTimeout(resolve, attempt * PLAN_RETRY_WAIT_SECONDS * 1000))
+    }
+  }
+}
+
+// Builds the lesson plan: the plan model first; if it is unavailable or misses its deadline, the
+// backup model, with a few tries; and one repair, by the backup, if the plan breaks the rules.
 export async function generatePlan(apiKey, file, teacherPrompt, { signal, onModel }) {
   const ai = new GoogleGenAI({ apiKey })
   const contents = planContents(file, teacherPrompt)
@@ -74,8 +87,7 @@ export async function generatePlan(apiKey, file, teacherPrompt, { signal, onMode
     // The teacher pressing Cancel stops everything; a slow or unavailable model hands over.
     if (signal?.aborted || !(deadline.aborted || isUnavailable(error))) throw error
     model = PLAN_BACKUP_MODEL
-    onModel(model)
-    attempt = await askForPlan(ai, model, contents, signal)
+    attempt = await askBackup(ai, contents, signal, onModel)
   }
 
   if (!attempt.plan) {

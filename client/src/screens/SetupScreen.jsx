@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Alert from '../components/Alert.jsx'
 import Button from '../components/Button.jsx'
 import { Pencil, TutorAvatar } from '../components/Drawings.jsx'
@@ -32,8 +32,22 @@ function sizeLabel(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
+// What the teacher reads while waiting: how long it has been, and what the app is doing about it.
+function waitingNote(stage, seconds) {
+  if (stage.backup && stage.attempt > 1) return `Google is busy, so the app is trying again (try ${stage.attempt} of 3).`
+  if (stage.backup) return 'The first model was slow or busy, so a faster model is finishing the plan.'
+  if (seconds >= 20) return 'Still working. Long and scanned files take longer; keep this page open.'
+  return 'A short file usually takes under a minute.'
+}
+
 function BuildProgress({ stage, onCancel }) {
   const current = STAGES.findIndex((item) => item.events.includes(stage.name))
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(tick)
+  }, [])
+  const seconds = Math.max(0, Math.round((now - stage.startedAt) / 1000))
   return (
     <div className="space-y-5">
       <ol className="space-y-3" aria-live="polite">
@@ -48,8 +62,8 @@ function BuildProgress({ stage, onCancel }) {
           </li>
         ))}
       </ol>
-      {stage.backup && <Alert>The main model is not available, so a faster model is writing the plan.</Alert>}
-      <p className="text-small text-graphite">A short file takes under a minute; a long one can take two.</p>
+      <p className="font-medium">Working for {seconds} {seconds === 1 ? 'second' : 'seconds'}.</p>
+      <Alert>{waitingNote(stage, seconds)}</Alert>
       <Button variant="secondary" onClick={onCancel}>Cancel</Button>
     </div>
   )

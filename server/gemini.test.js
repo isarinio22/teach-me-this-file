@@ -3,7 +3,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 // The real SDK is replaced by a script: every call to the model takes the next scripted
 // reply. A reply is either the text the model returns or an error it throws.
 const script = vi.hoisted(() => {
-  process.env.PLAN_DEADLINE_SECONDS = '0.05' // a 50 ms deadline, so the slow-model test is fast
+  process.env.PLAN_DEADLINE_SECONDS = '0.05' // a 50 ms deadline and 10 ms waits, so the tests are fast
+  process.env.PLAN_RETRY_WAIT_SECONDS = '0.01'
   return { replies: [], modelsCalled: [] }
 })
 
@@ -85,6 +86,20 @@ test('switches to the backup model when the plan model is busy', async () => {
   const result = await build()
   expect(result.usedBackupModel).toBe(true)
   expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL])
+})
+
+test('tries the backup model again when it is busy', async () => {
+  script.replies = [busy(), busy(), JSON.stringify(validPlan())]
+  const result = await build()
+  expect(result.usedBackupModel).toBe(true)
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL])
+})
+
+test('stops after three busy answers from the backup model', async () => {
+  script.replies = [busy(), busy(), busy(), busy()]
+  const error = await build().catch((caught) => caught)
+  expect(describeError(error, '').code).toBe('model_busy')
+  expect(script.modelsCalled).toEqual([PLAN_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL, PLAN_BACKUP_MODEL])
 })
 
 test('asks for one repair when a question has two correct options', async () => {
