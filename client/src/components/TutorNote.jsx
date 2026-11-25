@@ -22,13 +22,31 @@ export function LessonText({ children, className = '' }) {
 }
 
 // One thing the tutor said, written on the sheet like a note, not in a chat bubble.
-// waiting: what the student reads until the first words of a live reply arrive.
+// Three dots that rise in turn, the way a chat shows that someone is typing.
+function TypingDots() {
+  return (
+    <span aria-hidden="true" className="inline-flex items-center gap-1.5 rounded-pill bg-desk px-4 py-3">
+      {['0s', '0.15s', '0.3s'].map((delay) => (
+        <span key={delay} style={{ animationDelay: delay }} className="size-2.5 rounded-pill bg-graphite motion-safe:animate-typing" />
+      ))}
+    </span>
+  )
+}
+
+// waiting: what the student reads until the first words of a live reply arrive, under typing dots.
 export default function TutorNote({ text, note, live, waiting, onShowSource }) {
   return (
     <div className="flex gap-3">
       <TutorAvatar className="size-12" />
       <div className="min-w-0 flex-1" aria-live={live ? 'polite' : undefined}>
-        {text || !waiting ? <LessonText className="text-lesson">{text || '…'}</LessonText> : <p className="text-lesson text-graphite motion-safe:animate-pulse">{waiting}</p>}
+        {text || !waiting ? (
+          <LessonText className="text-lesson">{text || '…'}</LessonText>
+        ) : (
+          <div role="status">
+            <TypingDots />
+            <p dir="ltr" className="mt-2 text-graphite">{waiting}</p>
+          </div>
+        )}
         {note && <p className="mt-1 text-small text-graphite">{note}</p>}
         {onShowSource && <Button variant="quiet" className="text-small" onClick={onShowSource}>Show source</Button>}
       </div>

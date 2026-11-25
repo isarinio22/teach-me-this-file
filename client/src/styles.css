@@ -62,6 +62,12 @@
     from { transform: scale(0.6); opacity: 0.4; }
     to { transform: scale(1); opacity: 1; }
   }
+  /* The tutor is typing: three dots rise and darken one after another. */
+  --animate-typing: typing 1.2s ease-in-out infinite;
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30% { transform: translateY(-40%); opacity: 1; }
+  }
 }
 
 /* Lesson text written in Markdown: tutor notes and passages from the file. */

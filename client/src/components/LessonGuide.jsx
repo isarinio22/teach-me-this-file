@@ -8,15 +8,15 @@ export const HINTS = {
 
 // What the student reads while a reply has not started yet, so a wait is never a blank screen.
 export const WAITING = {
-  open: 'The tutor is getting ready…',
-  teach: 'The tutor is preparing this step…',
-  hint: 'Not quite. The tutor is writing you a hint…',
-  reteach: 'Not yet. The tutor is explaining it another way…',
-  reveal: 'The tutor is showing you the answer, and why…',
-  confirm: 'Right! The tutor is explaining why…',
-  respond: 'The tutor is reading your message…',
-  recap: 'The tutor is bringing back a step to review…',
-  wrap_up: 'The tutor is wrapping up the lesson…',
+  open: 'The tutor is typing…',
+  teach: 'The tutor is typing the explanation for this step…',
+  hint: 'Not quite. The tutor is typing you a hint…',
+  reteach: 'Not yet. The tutor is typing another way to explain it…',
+  reveal: 'The tutor is typing the answer, and why…',
+  confirm: 'Right! The tutor is typing why…',
+  respond: 'The tutor is typing a reply…',
+  recap: 'The tutor is typing a review of a step…',
+  wrap_up: 'The tutor is typing the end of the lesson…',
 }
 export const SLOW_NOTE = 'Google is slow right now. The app keeps trying for up to a minute.'
 
