@@ -27,7 +27,7 @@ export default function AnswerSheet({ item, order, marks, disabled, done, onChec
   return (
     <form onSubmit={check} className="rounded-field border-2 border-blue/30 bg-desk p-4 sm:p-5">
       <fieldset disabled={disabled}>
-        <legend className="text-small text-graphite">Answer sheet</legend>
+        <legend className="text-small text-graphite">{done ? 'Answer sheet' : 'Answer sheet. Choose one answer, then press Check answer.'}</legend>
         <LessonText className="mt-1 text-lesson font-medium">{item.stem}</LessonText>
         <div className="mt-4 space-y-2">
           {order.map((index, position) => {

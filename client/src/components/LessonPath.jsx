@@ -16,8 +16,9 @@ export function OutcomeMark({ outcome }) {
   )
 }
 
-// The lesson as a row of numbered steps, each marked with how it went.
-export default function LessonPath({ steps, currentIndex, outcomes, label }) {
+// The lesson as a row of numbered steps, each marked with how it went. Steps open in order: one not
+// reached yet is drawn dashed and cannot be tapped, and a finished one can be opened again (onOpen).
+export default function LessonPath({ steps, currentIndex, outcomes, label, onOpen }) {
   return (
     <nav aria-label="Lesson progress">
       <p className="font-bold">{label}</p>
@@ -28,11 +29,24 @@ export default function LessonPath({ steps, currentIndex, outcomes, label }) {
           const state = outcome ? OUTCOME_LABELS[outcome] : current ? 'current step' : 'not started'
           const look = current
             ? 'border-blue bg-blue text-paper'
-            : outcome === 'needs_review' ? 'border-pen bg-paper text-pen' : outcome ? 'border-grid bg-paper' : 'border-grid bg-desk text-graphite'
-          return (
-            <li key={step.id} aria-current={current ? 'step' : undefined} className={`flex size-10 items-center justify-center rounded-pill border-2 font-medium ${look}`}>
+            : outcome === 'needs_review' ? 'border-pen bg-paper text-pen' : outcome ? 'border-grid bg-paper' : 'border-dashed border-graphite/50 bg-desk text-graphite'
+          const circle = `flex size-11 items-center justify-center rounded-pill border-2 font-medium ${look}`
+          const face = (
+            <>
               {outcome && outcome !== 'needs_review' && !current ? <OutcomeMark outcome={outcome} /> : index + 1}
               <span className="sr-only">: {step.title}, {state}</span>
+            </>
+          )
+          return (
+            <li key={step.id} aria-current={current ? 'step' : undefined}>
+              {outcome && !current ? (
+                <button type="button" onClick={() => onOpen(index)} className={`${circle} cursor-pointer hover:border-blue`}>
+                  {face}
+                  <span className="sr-only">. Read it again</span>
+                </button>
+              ) : (
+                <span className={circle}>{face}</span>
+              )}
             </li>
           )
         })}
