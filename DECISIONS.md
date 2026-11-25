@@ -70,7 +70,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 ## 5. How I know it works
 
-**Unit tests (33, the model is mocked):**
+**Unit tests (35, the model is mocked):**
 - the hint ladder and each step outcome, the recap, shuffled options, removing a step;
 - what the tutor is allowed to see for each move;
 - the stream splitter with the delimiter cut across chunks, with missing JSON, and with invalid JSON;
@@ -191,7 +191,7 @@ I taught psychometric exam prep and trained teachers for years. This app teaches
 
 ## 5. How I know it works
 
-**Unit tests (33, the model is mocked):**
+**Unit tests (35, the model is mocked):**
 - the hint ladder and each step outcome, the recap, shuffled options, removing a step;
 - what the tutor is allowed to see for each move;
 - the stream splitter with the delimiter cut across chunks, with missing JSON, and with invalid JSON;
