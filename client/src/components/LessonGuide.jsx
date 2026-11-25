@@ -15,7 +15,6 @@ export const WAITING = {
   reveal: 'The tutor is typing the answer, and why…',
   confirm: 'Right! The tutor is typing why…',
   respond: 'The tutor is typing a reply…',
-  recap: 'The tutor is typing a review of a step…',
   wrap_up: 'The tutor is typing the end of the lesson…',
 }
 export const SLOW_NOTE = 'Google is slow right now. The app keeps trying for up to a minute.'
@@ -29,7 +28,7 @@ export function HowItWorks() {
         <li>The tutor asks what you already know. Answer in your own words; there are no wrong answers here.</li>
         <li>Each step teaches one idea. Read it, ask the tutor anything, then answer one question about it.</li>
         <li>A wrong answer gets a hint and another try.</li>
-        <li>At the end, the steps you found hardest come back, and you see a report.</li>
+        <li>At the end, the tutor sums up the lesson, and you see a report.</li>
       </ol>
       <p className="mt-2">Steps open in order. Tap a finished step to read it again.</p>
     </div>

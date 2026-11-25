@@ -8,7 +8,6 @@ export default function ReportScreen({ lesson, usedBackupModel, onRestart }) {
   const { plan, outcomes } = lesson
   const firstTry = plan.steps.filter((step) => outcomes[step.id] === 'first_try').length
   const minutes = Math.max(1, Math.round((Date.now() - lesson.startedAt) / 60000))
-  const reviewed = lesson.review?.results ?? {}
   const seen = new Set()
   const caught = lesson.misconceptions.filter(({ stepId, text }) => text && !seen.has(stepId + text) && seen.add(stepId + text))
 
@@ -33,7 +32,6 @@ export default function ReportScreen({ lesson, usedBackupModel, onRestart }) {
                   <p dir="auto" className="font-medium">{step.title}</p>
                   <p className="text-small text-graphite">
                     {OUTCOME_LABELS[outcomes[step.id]] ?? 'Not reached'}
-                    {step.id in reviewed && `. Asked again at the end: ${reviewed[step.id] ? 'right' : 'still wrong'}.`}
                   </p>
                 </div>
               </li>
@@ -61,7 +59,7 @@ export default function ReportScreen({ lesson, usedBackupModel, onRestart }) {
           <TutorAvatar className="size-24" />
           <h2 className="mt-3 font-bold">For the next lesson</h2>
           <p className="mt-3 text-small text-graphite">
-            Start from the steps that needed a second explanation or a review, and from the wrong ideas listed here. Each one is the specific belief the student showed when choosing an answer.
+            Start from the steps that needed a second explanation or the answer, and from the wrong ideas listed here. Each one is the specific belief the student showed when choosing an answer.
           </p>
         </aside>
       </div>

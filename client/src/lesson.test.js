@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { lessonReducer, nextMove, optionOrder, turnRequest, weakestSteps } from './lesson.js'
+import { lessonReducer, nextMove, optionOrder, turnRequest } from './lesson.js'
 
 // A plan with n steps. In every main question option 1 is correct; in every parallel question, option 0.
 function makePlan(n = 3) {
@@ -95,38 +95,19 @@ test('a question typed during a check is answered without changing the question'
   expect(play(...OPENING, 'Is this about leaves?', 'reply').phase).toBe('checking')
 })
 
-// Step 1 right after a hint, step 2 needs review, step 3 right first time.
+// Step 1 right after a hint, step 2 answered by the tutor after three misses, step 3 right first time.
 const WHOLE_LESSON = [
   ...OPENING, WRONG, 'reply', RIGHT_MAIN, 'reply', 'next',
   'reply', WRONG, 'reply', 3, 'reply', WRONG, 'reply', 'next',
   'reply', RIGHT_MAIN, 'reply', 'next',
 ]
 
-test('the recap brings back the weakest steps, worst first, at most two', () => {
+test('after the last step the tutor wraps up, without going back to earlier steps', () => {
   const state = play(...WHOLE_LESSON)
-  expect(weakestSteps(state)).toEqual(['s2', 's1'])
-  expect(state.review.stepIds).toEqual(['s2', 's1'])
-  expect(state.stepIndex).toBe(1)
-  expect(state.itemKind).toBe('main')
-  expect(nextMove(state)).toBe('recap')
-
-  const missed = play(...WHOLE_LESSON, 'reply', WRONG)
-  expect(nextMove(missed)).toBe('reveal') // no ladder in the review: one try, then the answer
-  expect(missed.review.results.s2).toBe(false)
-
-  const secondReview = play(...WHOLE_LESSON, 'reply', WRONG, 'reply', 'next')
-  expect(secondReview.stepIndex).toBe(0)
-  expect(secondReview.itemKind).toBe('parallel') // step 1 never saw its parallel question
-
-  const end = play(...WHOLE_LESSON, 'reply', WRONG, 'reply', 'next', 'reply', RIGHT_PARALLEL, 'reply', 'next')
-  expect(nextMove(end)).toBe('wrap_up')
-  expect(play(...WHOLE_LESSON, 'reply', WRONG, 'reply', 'next', 'reply', RIGHT_PARALLEL, 'reply', 'next', 'reply').phase).toBe('finished')
-})
-
-test('a lesson with every step right the first time has no recap', () => {
-  const state = play(...OPENING, RIGHT_MAIN, 'reply', 'next', 'reply', RIGHT_MAIN, 'reply', 'next', 'reply', RIGHT_MAIN, 'reply', 'next')
-  expect(state.review).toBe(null)
+  expect(state.outcomes).toEqual({ s1: 'after_hint', s2: 'needs_review', s3: 'first_try' })
   expect(nextMove(state)).toBe('wrap_up')
+  expect(state.stepIndex).toBe(2)
+  expect(play(...WHOLE_LESSON, 'reply').phase).toBe('finished')
 })
 
 test('options are shuffled, the same way on every render', () => {

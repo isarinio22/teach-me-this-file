@@ -31,7 +31,7 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   const steps = lesson.plan.steps
   const reread = rereadIndex === null ? null : steps[rereadIndex]
   const viewed = reread ? reread.id : here // the part of the lesson on screen
-  const shown = lesson.messages.filter((message) => message.section === viewed || (reread && message.section === `review-${reread.id}`))
+  const shown = lesson.messages.filter((message) => message.section === viewed)
   const busy = Boolean(live || move || failure)
 
   // Whenever the lesson needs the tutor, one turn runs. The ref stops a second one from starting.
@@ -86,11 +86,9 @@ export default function LessonScreen({ lesson, dispatch, apiKey, onFinish }) {
   if (lesson.lastAnswer?.correct) marks[lesson.lastAnswer.optionIndex] = 'right'
   else if (lesson.phase === 'answered') marks[item.options.findIndex((option) => option.correct)] = 'answer'
 
-  const review = lesson.review
-  const label = reread ? `Step ${rereadIndex + 1} of ${steps.length}, done` : here === 'end' ? `All ${steps.length} steps done` : review ? `Review ${review.index + 1} of ${review.stepIds.length}` : `Step ${lesson.stepIndex + 1} of ${steps.length}`
-  const heading = reread ? reread.title : here === 'end' ? 'Wrapping up' : review ? `Review: ${step.title}` : step.title
-  const moreSteps = review ? review.index + 1 < review.stepIds.length : lesson.stepIndex + 1 < steps.length
-  const nextLabel = !moreSteps ? 'Continue' : review ? 'Next question' : 'Next step'
+  const label = reread ? `Step ${rereadIndex + 1} of ${steps.length}, done` : here === 'end' ? `All ${steps.length} steps done` : `Step ${lesson.stepIndex + 1} of ${steps.length}`
+  const heading = reread ? reread.title : here === 'end' ? 'Wrapping up' : step.title
+  const nextLabel = lesson.stepIndex + 1 < steps.length ? 'Next step' : 'Continue'
   const idle = !busy && !reread // the student's turn, on the current step
   const canWrite = idle && !['closing', 'finished'].includes(lesson.phase)
   const hint = idle && HINTS[lesson.phase]

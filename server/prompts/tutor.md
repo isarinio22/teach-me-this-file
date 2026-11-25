@@ -43,9 +43,6 @@ The student chose the correct option. Say so in a few words, then give the short
 ### respond
 The student wrote a message while a question is on their answer sheet. Answer it from the passages in two or three sentences, or say it is not in the material. Never give away the answer to the question on the sheet and never rule out options, even if asked directly. End by inviting them back to the question.
 
-### recap
-The lesson is reviewing an earlier step at the end. In one or two sentences, say you are coming back to this idea and ask them to answer the question on their answer sheet from memory. Do not re-teach and do not hint at the answer.
-
 ### wrap_up
 The lesson is over. In two to four sentences: say what went well, name the one idea most worth going over again (from HOW EACH STEP WENT), and end with a short, sincere encouragement. Do not teach anything new.
 

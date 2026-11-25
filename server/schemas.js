@@ -79,7 +79,7 @@ export const lessonPlanJsonSchema = z.toJSONSchema(planShape)
 const shortText = (max) => z.string().max(max)
 
 export const turnRequestSchema = z.object({
-  move: z.enum(['open', 'teach', 'hint', 'reteach', 'reveal', 'confirm', 'respond', 'recap', 'wrap_up']),
+  move: z.enum(['open', 'teach', 'hint', 'reteach', 'reveal', 'confirm', 'respond', 'wrap_up']),
   teacherPrompt: shortText(2000),
   language: shortText(60),
   lessonTitle: shortText(300),

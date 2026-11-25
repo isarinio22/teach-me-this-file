@@ -6,7 +6,6 @@ const LADDER = ['hint', 'reteach', 'reveal']
 // A step's outcome, named by how many wrong answers came before the right one.
 const OUTCOMES = ['first_try', 'after_hint', 'after_reteach', 'needs_review']
 const MAX_TEACH_TURNS = 2 // tutor turns in a step before its check question appears
-const MAX_REVIEW = 2 // weakest steps asked again at the end (rule 8)
 const HISTORY = 6 // recent messages the tutor sees on each turn
 
 function startLesson({ plan, teacherPrompt, now, seed }) {
@@ -22,7 +21,6 @@ function startLesson({ plan, teacherPrompt, now, seed }) {
     crossedOut: [], // options already missed on the current question
     teachTurns: 0,
     lastAnswer: null, // { optionIndex, correct }
-    review: null, // at the end: { stepIds, index, results: { stepId: true or false } }
     outcomes: {}, // { stepId: one of OUTCOMES }
     misconceptions: [], // [{ stepId, text }]
     background: '', // what the student said they already know; it sets the pace
@@ -42,7 +40,7 @@ export function currentItem(state) {
 // The part of the lesson on screen. Only the current step is shown, to keep the student on one idea.
 export function section(state) {
   if (state.phase === 'closing' || state.phase === 'finished') return 'end'
-  return state.review ? `review-${currentStep(state).id}` : currentStep(state).id
+  return currentStep(state).id
 }
 
 // The heart of the method: what the tutor does next, or null when it is the student's turn.
@@ -50,12 +48,11 @@ export function nextMove(state) {
   switch (state.waitingFor) {
     case 'start': return 'open'
     case 'step': return 'teach'
-    case 'review': return 'recap'
     case 'end': return 'wrap_up'
     case 'message': return state.phase === 'teaching' ? 'teach' : 'respond'
     case 'answer':
       if (state.lastAnswer.correct) return 'confirm'
-      return state.review ? 'reveal' : LADDER[state.misses - 1]
+      return LADDER[state.misses - 1]
     default: return null
   }
 }
@@ -73,13 +70,6 @@ export function optionOrder(state) {
     ;[order[i], order[j]] = [order[j], order[i]]
   }
   return order
-}
-
-// The steps that went worst, worst first, at most two. A step right on the first try never comes back.
-export function weakestSteps(state) {
-  const rank = (step) => OUTCOMES.indexOf(state.outcomes[step.id])
-  const weak = state.plan.steps.filter((step) => rank(step) > 0)
-  return weak.sort((a, b) => rank(b) - rank(a)).slice(0, MAX_REVIEW).map((step) => step.id)
 }
 
 function withMessage(state, message) {
@@ -109,7 +99,6 @@ function optionChosen(state, optionIndex) {
       misconceptions: [...state.misconceptions, { stepId: step.id, text: option.misconception }],
     }
   }
-  if (state.review) return { ...next, review: { ...state.review, results: { ...state.review.results, [step.id]: option.correct } } }
   if (option.correct) return { ...next, outcomes: { ...state.outcomes, [step.id]: OUTCOMES[state.misses] } }
   const misses = state.misses + 1
   const outcomes = misses === LADDER.length ? { ...state.outcomes, [step.id]: 'needs_review' } : state.outcomes
@@ -130,23 +119,17 @@ function tutorReplied(state, { text, turn, stopped }) {
   if (move === 'reteach') return { ...next, itemKind: 'parallel', crossedOut: [], lastAnswer: null }
   if (move === 'confirm' || move === 'reveal') return { ...next, phase: 'answered' }
   if (move === 'wrap_up') return { ...next, phase: 'finished' }
-  return next // open, hint, respond and recap leave the phase as it is
+  return next // open, hint and respond leave the phase as it is
 }
 
-// The student moves on: to the next step, to the review questions, or to the end.
+// The student moves on: to the next step, or after the last one to the tutor's wrap-up. There is
+// no review of earlier steps at the end (my decision, 2026-11-25): the report shows the weak steps.
 function continued(state) {
   const fresh = { itemKind: 'main', misses: 0, crossedOut: [], teachTurns: 0, lastAnswer: null }
-  if (!state.review && state.stepIndex + 1 < state.plan.steps.length) {
+  if (state.stepIndex + 1 < state.plan.steps.length) {
     return { ...state, ...fresh, stepIndex: state.stepIndex + 1, phase: 'teaching', waitingFor: 'step' }
   }
-  const stepIds = state.review ? state.review.stepIds : weakestSteps(state)
-  const index = state.review ? state.review.index + 1 : 0
-  if (index >= stepIds.length) return { ...state, ...fresh, phase: 'closing', waitingFor: 'end' }
-  // A step right after a hint never saw its parallel question, so the review uses it.
-  const itemKind = state.outcomes[stepIds[index]] === 'after_hint' ? 'parallel' : 'main'
-  const stepIndex = state.plan.steps.findIndex((step) => step.id === stepIds[index])
-  const review = { stepIds, index, results: state.review?.results ?? {} }
-  return { ...state, ...fresh, stepIndex, itemKind, review, phase: 'checking', waitingFor: 'review' }
+  return { ...state, ...fresh, phase: 'closing', waitingFor: 'end' }
 }
 
 export function lessonReducer(state, event) {
@@ -183,7 +166,7 @@ export function turnRequest(state, move, now) {
     request.step = { number: state.stepIndex + 1, of: state.plan.steps.length, title: step.title, objective: step.objective, passages }
   }
   if (move === 'wrap_up') request.outcomes = state.plan.steps.map((item) => ({ title: item.title, outcome: state.outcomes[item.id] ?? 'not_reached' }))
-  if (['hint', 'reteach', 'reveal', 'confirm', 'respond', 'recap'].includes(move)) {
+  if (['hint', 'reteach', 'reveal', 'confirm', 'respond'].includes(move)) {
     const item = currentItem(state)
     const showAnswer = move === 'confirm' || move === 'reveal'
     const options = optionOrder(state).map((index, position) => ({
